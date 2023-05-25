@@ -110,7 +110,7 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
-            'NAME': 'proyecto_web',
+            'NAME': 'mathia',
             'USER': 'root',
             'PASSWORD': '1234',
             'HOST': 'localhost',

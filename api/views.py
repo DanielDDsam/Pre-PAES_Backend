@@ -59,7 +59,7 @@ class LoginView(APIView):
         user = authenticate(email=email, password=password)
         if user is not None:
             token = get_tokens_for_user(user)
-            return Response({'token': token, 'msg': 'Inicio de sesión exitoso','status': 'ok'}, status=status.HTTP_200_OK)
+            return Response({'token': token, 'msg': 'Inicio de sesión exitoso','status': 'ok','user_id': user.id }, status=status.HTTP_200_OK)
         else:
             return Response({'errors': {'error_de_campo': ['Email o contraseña invalidos']}},
                             status=status.HTTP_404_NOT_FOUND)
