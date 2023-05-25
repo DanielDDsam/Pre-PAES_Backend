@@ -16,8 +16,38 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from django.conf import settings
 from django.core.mail import send_mail
+import openai, os
+from dotenv import load_dotenv
+load_dotenv()
 
 # Create your views here.
+
+api_key = os.getenv("OPENAI_KEY", None)
+
+class chatbot(APIView):
+
+    def post(self, request):
+        chatbot_reponse = None
+        if api_key is not None and request.method == 'POST':
+            openai.api_key = api_key
+            user_input = request.POST.get('user_input')
+            prompt = user_input
+
+            reponse = openai.Completion.create(
+                model = 'text-davinci-003', #dependiendo del engine las respuestas seran, mejores, mas rapidas etc model no funciona, ver porque #el ada es tontito
+                prompt = prompt,
+                max_tokens=250,
+                #stop='.'
+                temperature=0.5 #nivel de creatividad
+            )
+            print(reponse)
+
+            chatbot_reponse = reponse["choices"][0]["text"]
+        if chatbot_reponse is not None:
+            return Response({"response": chatbot_reponse}, status=status.HTTP_200_OK)
+        else:
+            return Response({'errors': {'error_de_campo': ['Promt vacio']}},
+                                status=status.HTTP_404_NOT_FOUND)
 
 #funcion para obtener jwt para el usuario cuando hace login
 def get_tokens_for_user(user):
