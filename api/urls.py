@@ -4,6 +4,8 @@ from django.urls import path, re_path
 from django.conf.urls import include
 from rest_framework_simplejwt.views import (TokenObtainPairView,)
 from rest_framework_simplejwt import views as jwt_views
+from .views import chatbot
+
 
 
 # RESTful endpoints
@@ -28,7 +30,8 @@ urlpatterns = [
     re_path(r'^score_user/all/$', views.AnswerEssayUserView.as_view()), #endpoint para obtener el puntaje del usuario
     re_path(r'^submit_essay_user/$', views.UserEssayView.as_view()), #endpoint que guarda el ensayo que realizo el usuario
     re_path(r'^submit_answers/$', views.SaveAnswersView.as_view()),#endpoint para guardar las respuestas del usuario
-    re_path(r'^history/(?P<pk>[0-9]+)/$', views.UserEssayHistoryView.as_view()) # endpoint para el historial
+    re_path(r'^history/(?P<pk>[0-9]+)/$', views.UserEssayHistoryView.as_view()), # endpoint para el historial
+    re_path(r'^chatbot/$', views.chatbot.as_view())
 ]
 
 urlpatterns += [
