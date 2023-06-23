@@ -31,7 +31,9 @@ urlpatterns = [
     re_path(r'^submit_essay_user/$', views.UserEssayView.as_view()), #endpoint que guarda el ensayo que realizo el usuario
     re_path(r'^submit_answers/$', views.SaveAnswersView.as_view()),#endpoint para guardar las respuestas del usuario
     re_path(r'^history/(?P<pk>[0-9]+)/$', views.UserEssayHistoryView.as_view()), # endpoint para el historial
-    re_path(r'^chatbot/$', views.chatbot.as_view())
+    re_path(r'^chatbot/$', views.chatbot.as_view()),
+    re_path(r'^chatbotPrueba/$', views.chatbotPrueba.as_view()),
+    re_path(r'^wolfram_alpha_query/$', views.WolframAlphaQuery.as_view())  # Endpoint para consultar la API de Wolfram Alpha
 ]
 
 urlpatterns += [

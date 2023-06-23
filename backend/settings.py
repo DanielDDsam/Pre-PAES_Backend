@@ -112,7 +112,7 @@ DATABASES = {
             'ENGINE': 'django.db.backends.mysql',
             'NAME': 'mathia',
             'USER': 'root',
-            'PASSWORD': 'root',
+            'PASSWORD': '1234',
             'HOST': 'localhost',
             'PORT': '3306'
         }

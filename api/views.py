@@ -18,33 +18,158 @@ from django.conf import settings
 from django.core.mail import send_mail
 import openai, os
 from dotenv import load_dotenv
+import requests
+import json
+import wolframalpha
+from xml.etree import ElementTree
 load_dotenv()
 
 # Create your views here.
 
 api_key = os.getenv("OPENAI_KEY", None)
+puntajes = {
+    "Universidad de Chile": [
+    { "programa": "Arquitectura", "puntaje": 728.30 },
+    { "programa": "DISEÑO", "puntaje": 695.05 },
+    { "programa": "GEOGRAFÍA", "puntaje": 608.10 },
+    { "programa": "ACTUACIÓN TEATRAL", "puntaje": 718.98 },
+    { "programa": "ARTES VISUALES", "puntaje": 701.90 },
+    { "programa": "DANZA", "puntaje": 749.08 },
+    { "programa": "DISEÑO TEATRAL", "puntaje": 627.95 },
+    { "programa": "INGENIERÍA EN SONIDO", "puntaje": 782.10 },
+    { "programa": "TEORÍA DE LA MÚSICA", "puntaje": 667.70 },
+    { "programa": "TEORÍA E HISTORIA DEL ARTE", "puntaje": 612.70 },
+    { "programa": "BIOLOGÍA CON MENCIÓN EN MEDIO AMBIENTE", "puntaje": 724.30 },
+    { "programa": "INGENIERÍA EN BIOTECNOLOGÍA MOLECULAR", "puntaje": 831.60 },
+    { "programa": "LIC. EN CIENCIAS MENCIÓN BIOLOGÍA", "puntaje": 713.15 },
+    { "programa": "LIC. EN CIENCIAS MENCIÓN FÍSICA", "puntaje": 739.10 },
+    { "programa": "LIC. EN CIENCIAS MENCIÓN MATEMÁTICAS", "puntaje": 617.30 },
+    { "programa": "LIC. EN CIENCIAS MENCIÓN QUÍMICA", "puntaje": 488.10 },
+    { "programa": "PEDAGOGÍA EN ED. MEDIA EN BIOLOGÍA Y QUÍMICA", "puntaje": 570.40 },
+    { "programa": "PEDAGOGÍA EN ED. MEDIA EN MATEMÁTICAS Y FÍSICA", "puntaje": 524.90 },
+    { "programa": "QUÍMICA AMBIENTAL", "puntaje": 539.65 },
+    { "programa": "INGENIERÍA AGRONÓMICA", "puntaje": 603.45 },
+    { "programa": "INGENIERÍA EN RECURSOS NATURALES RENOVABLES", "puntaje": 635.05 },
+    { "programa": "INGENIERÍA Y CIENCIAS - PLAN COMÚN", "puntaje": 818.35 },
+    { "programa": "INGENIERÍA EN RECURSOS HÍDRICOS", "puntaje": 523.60 },
+    { "programa": "INGENIERÍA FORESTAL", "puntaje": 573.90 },
+    { "programa": "BIOQUÍMICA", "puntaje": 778.80 },
+    { "programa": "INGENIERÍA EN ALIMENTOS", "puntaje": 558.00 },
+    { "programa": "QUÍMICA", "puntaje": 621.90 },
+    { "programa": "QUÍMICA Y FARMACIA", "puntaje": 727.10 },
+    { "programa": "ANTROPOLOGÍA-ARQUEOLOGÍA", "puntaje": 761.65 },
+    { "programa": "PEDAGOGÍA EN EDUCACIÓN PARVULARIA", "puntaje": 648.85 },
+    { "programa": "PSICOLOGÍA", "puntaje": 864.05 },
+    { "programa": "SOCIOLOGÍA", "puntaje": 740.55 },
+    { "programa": "TRABAJO SOCIAL", "puntaje": 711.40 },
+    { "programa": "MEDICINA VETERINARIA", "puntaje": 725.30 },
+    { "programa": "CINE Y TELEVISIÓN", "puntaje": 751.30 },
+    { "programa": "PERIODISMO", "puntaje": 748.30 },
+    { "programa": "DERECHO", "puntaje": 830.80 },
+    { "programa": "CONTADOR AUDITOR", "puntaje": 703.65 },
+    { "programa": "INGENIERÍA EN INFORMACIÓN Y CONTROL DE GESTIÓN", "puntaje": 700.90 },
+    { "programa": "INGENIERÍA COMERCIAL", "puntaje": 777.95 },
+    { "programa": "ESTUDIOS INTERNACIONALES", "puntaje": 822.60 },
+    { "programa": "FILOSOFÍA", "puntaje": 523.40 },
+    { "programa": "HISTORIA", "puntaje": 661.20 },
+    { "programa": "LINGÜÍSTICA Y LITERATURA", "puntaje": 668.50 },
+    { "programa": "LINGÜÍSTICA Y LITERATURA INGLESAS", "puntaje": 690.90 },
+    { "programa": "PEDAGOGÍA EN EDUCACIÓN BÁSICA", "puntaje": 677.15 },
+    { "programa": "ADMINISTRACIÓN PÚBLICA", "puntaje": 708.20 },
+    { "programa": "CIENCIA POLÍTICA", "puntaje": 791.60 },
+    { "programa": "ENFERMERÍA", "puntaje": 755.25 },
+    { "programa": "FONOAUDIOLOGÍA", "puntaje": 599.35 },
+    { "programa": "KINESIOLOGÍA", "puntaje": 743.30 },
+    { "programa": "MEDICINA", "puntaje": 900.00 },
+    { "programa": "NUTRICIÓN Y DIETÉTICA", "puntaje": 695.60 },
+    { "programa": "OBSTETRICIA Y PUERICULTURA", "puntaje": 754.55 },
+    { "programa": "TECNOLOGÍA MÉDICA", "puntaje": 767.60 },
+    { "programa": "TERAPIA OCUPACIONAL", "puntaje": 660.60 },
+    { "programa": "ODONTOLOGÍA", "puntaje": 772.40 },
+    { "programa": "PROGRAMA ACADÉMICO DE BACHILLERATO", "puntaje": 741.05 }
+    ]
+    }
+
+
+from rest_framework.response import Response
+
+class WolframAlphaQuery(APIView):
+    def post(self, request):
+        app_id = '6Y2Q4G-94JAJ2HAGG'  # Reemplaza con tu ID de la API de Wolfram Alpha
+        
+        client = wolframalpha.Client(app_id)
+        input_query = request.data.get('user_input') # Reemplaza con tu consulta específica
+        url = "http://api.wolframalpha.com/v2/query?appid="+app_id+"&input=solve+"+input_query+"&podstate=Result__Step-by-step%20solution&format=image"
+       
+
+        response = requests.get(url)
+        xml_data = ElementTree.fromstring(response.content)
+        image_elements = xml_data.findall(".//img")
+        image_urls = [img.get("src") for img in image_elements]
+
+        if input_query is not None:
+            return Response({"response": image_urls}, status=status.HTTP_200_OK)
+        else:
+            return Response({'errors': {'error_de_campo': ['Promt vacio']}})
+
+
+      
+
 
 class chatbot(APIView):
 
     def post(self, request):
-        chatbot_reponse = None
+        chatbot_response = None
         if api_key is not None and request.method == 'POST':
             openai.api_key = api_key
-            user_input = request.POST.get('user_input')
+            user_input = request.data.get('user_input')
             prompt = user_input
-
-            reponse = openai.Completion.create(
-                model = 'text-davinci-003', #dependiendo del engine las respuestas seran, mejores, mas rapidas etc model no funciona, ver porque #el ada es tontito
-                prompt = prompt,
+            #contexto del asistente 
+            messages = [{"role" : "system",
+                         "content": "Redacta mejor el siguiente texto. No vas a responder preguntas." }]
+            messages.append({"role" : "user","content": prompt})
+            response = openai.ChatCompletion.create(
+                model = 'gpt-3.5-turbo',
+                messages = messages,
+             
                 max_tokens=250,
-                #stop='.'
-                temperature=0.5 #nivel de creatividad
+                temperature=0.5
             )
-            print(reponse)
+            chatbot_response = response.choices[0].message.content
+            messages.append({"role" : "assistant","content": chatbot_response})
 
-            chatbot_reponse = reponse["choices"][0]["text"]
-        if chatbot_reponse is not None:
-            return Response({"response": chatbot_reponse}, status=status.HTTP_200_OK)
+            
+        if chatbot_response is not None:
+            return Response({"response": chatbot_response}, status=status.HTTP_200_OK)
+        else:
+            return Response({'errors': {'error_de_campo': ['Promt vacio']}},
+                                status=status.HTTP_404_NOT_FOUND)
+
+class chatbotPrueba(APIView):
+
+    def post(self, request):
+        chatbot_response = None
+        if api_key is not None and request.method == 'POST':
+            openai.api_key = api_key
+            user_input = request.data.get('user_critiques')
+            prompt = user_input
+            #contexto del asistente 
+            messages = [{"role" : "system",
+                         "content": "Tu mision es detectar los errores de redaccion de texto. No vas a responder preguntas." }]
+            messages.append({"role" : "user","content": prompt})
+            response = openai.ChatCompletion.create(
+                model = 'gpt-3.5-turbo',
+                messages = messages,
+             
+                max_tokens=250,
+                temperature=0.5
+            )
+            chatbot_response = response.choices[0].message.content
+            messages.append({"role" : "assistant","content": chatbot_response})
+
+            
+        if chatbot_response is not None:
+            return Response({"response": chatbot_response}, status=status.HTTP_200_OK)
         else:
             return Response({'errors': {'error_de_campo': ['Promt vacio']}},
                                 status=status.HTTP_404_NOT_FOUND)
