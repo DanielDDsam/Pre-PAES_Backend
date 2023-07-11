@@ -14,12 +14,13 @@ generic_fields = ['created', 'updated', 'is_deleted']
 #serializadores para class user
 
 
+# Serializador para el modelo Users
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = Users
-        exclude = [*generic_fields,'is_admin']
+        exclude = [*generic_fields, 'is_admin']
 
-
+# Serializador para el login del usuario
 class UserLoginSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(max_length=255)
 
@@ -27,16 +28,16 @@ class UserLoginSerializer(serializers.ModelSerializer):
         model = Users
         fields = ['email', 'password']
 
-
+# Serializador para el perfil del usuario
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Users
         fields = ['email', 'username']
 
 
-#serializador para el registro del usuario, compara las contraseñas para el match
-
+# Serializador para el registro del usuario, compara las contraseñas para verificar que coincidan
 class RegistrationSerializer(serializers.ModelSerializer):
+    # Atributos requeridos para el registro del usuario
     password2 = serializers.CharField(style={"input_type": "password"}, write_only=True)
     username = serializers.CharField(max_length=255)
 
@@ -47,18 +48,21 @@ class RegistrationSerializer(serializers.ModelSerializer):
             'password': {'write_only': True}
         }
 
+    # Método para guardar el usuario en la base de datos
     def save(self):
         user = Users(email=self.validated_data['email'], username=self.validated_data['username'])
         password = self.validated_data['password']
         password2 = self.validated_data['password2']
+        # Verificar que las contraseñas coincidan
         if password != password2:
             raise serializers.ValidationError({'password': 'Las contraseñas deben coincidir.'})
+        # Establecer la contraseña del usuario y guardarlo
         user.set_password(password)
         user.save()
         return user
 
 
-#cambia la contraseña solo si se sabe la contraseña actual
+# Serializador para cambiar la contraseña del usuario
 class PasswordChangeSerializer(serializers.Serializer):
     password = serializers.CharField(max_length=255, style={'input_type': 'password'}, write_only=True)
     password2 = serializers.CharField(max_length=255, style={'input_type': 'password'}, write_only=True)
@@ -70,40 +74,47 @@ class PasswordChangeSerializer(serializers.Serializer):
         password = attrs.get('password')
         password2 = attrs.get('password2')
         user = self.context.get('user')
+
+        # Verificar que las contraseñas coincidan
         if password != password2:
             raise serializers.ValidationError("Las contraseñas no coinciden")
+
+        # Cambiar la contraseña del usuario
+        if user.check_password(password):
+            raise serializers.ValidationError("La nueva contraseña debe ser diferente a la contraseña actual")
         user.set_password(password)
         user.save()
         return attrs
 
 
+# Serializador para enviar un correo de restablecimiento de contraseña
 class SendPasswordResetEmailSerializer(serializers.Serializer):
     email = serializers.EmailField(max_length=255)
 
     def validate(self, attrs):
         email = attrs.get('email')
+
+        # Verificar si el usuario existe en la base de datos
         if Users.objects.filter(email=email).exists():
             user = Users.objects.get(email=email)
             uid = urlsafe_base64_encode(force_bytes(user.id))
-            print('Encoded UID', uid)
             token = PasswordResetTokenGenerator().make_token(user)
-            print('Password Reset Token', token)
             link = 'http://localhost:3000/api/user/reset/'+uid+'/'+token
-            print('Link para reiniciar contraseña', link)
-            # Envia email
+
+            # Enviar el correo electrónico de restablecimiento de contraseña
             subject = 'Reinicia tu contraseña'
             message = f'Presiona el siguiente link para reiniciar tu contraseña: {link}/'
             from_email = EMAIL_HOST_USER
             recipient_list = [email]
             connection = get_connection()
             connection.open()
-            send_mail(subject,message,from_email,recipient_list)
+            send_mail(subject, message, from_email, recipient_list)
             connection.close()
             return attrs
         else:
             raise serializers.ValidationError('No eres un usuario registrado')
 
-
+# Serializador para restablecer la contraseña del usuario
 class UserPasswordResetSerializer(serializers.Serializer):
     password = serializers.CharField(max_length=255, style={'input_type': 'password'}, write_only=True)
     password2 = serializers.CharField(max_length=255, style={'input_type': 'password'}, write_only=True)
@@ -117,22 +128,29 @@ class UserPasswordResetSerializer(serializers.Serializer):
             password2 = attrs.get('password2')
             uid = self.context.get('uid')
             token = self.context.get('token')
+
+            # Verificar que las contraseñas coincidan
             if password != password2:
                 raise serializers.ValidationError("Las contraseñas no coinciden")
+
+            # Decodificar el UID y obtener el usuario correspondiente
             id = smart_str(urlsafe_base64_decode(uid))
             user = Users.objects.get(id=id)
+
+            # Verificar que el token sea válido
             if not PasswordResetTokenGenerator().check_token(user, token):
-                raise serializers.ValidationError('El token no es valido o expiro')
+                raise serializers.ValidationError('El token no es válido o ha expirado')
+
+            # Cambiar la contraseña del usuario
             user.set_password(password)
             user.save()
             return attrs
         except DjangoUnicodeDecodeError as identifier:
             PasswordResetTokenGenerator().check_token(user, token)
-            raise serializers.ValidationError('El token no es valido o expiro')
+            raise serializers.ValidationError('El token no es válido o ha expirado')
 
 
-#demas serializers
-
+# Serializador para Answer
 class AnswerSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -140,6 +158,7 @@ class AnswerSerializer(serializers.ModelSerializer):
         exclude = [*generic_fields, 'questions', 'users', 'essay']
 
 
+# Serializador para crear Answer
 class AnswerCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -147,6 +166,7 @@ class AnswerCreateSerializer(serializers.ModelSerializer):
         exclude = [*generic_fields, 'users']
 
 
+# Serializador para Question
 class QuestionSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -154,6 +174,7 @@ class QuestionSerializer(serializers.ModelSerializer):
         exclude = [*generic_fields, 'essays']
 
 
+# Serializador para crear Question
 class QuestionCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -161,6 +182,7 @@ class QuestionCreateSerializer(serializers.ModelSerializer):
         exclude = [*generic_fields]
 
 
+# Serializador para Essay
 class EssaySerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -168,6 +190,7 @@ class EssaySerializer(serializers.ModelSerializer):
         exclude = [*generic_fields, 'users']
 
 
+# Serializador para AnswerEssayUser
 class AnswerEssayUserSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -175,120 +198,266 @@ class AnswerEssayUserSerializer(serializers.ModelSerializer):
         fields = ['essays', 'score', 'answers']
 
 
-#serializador para mostrar las respuestas y sus preguntas ademas de la id el ensayo
+# Serializador para mostrar las respuestas y sus preguntas, junto con la ID del ensayo
 class QuestionsAlternativeAllSerializer(QuestionSerializer):
     answer = AnswerSerializer(many=True, read_only=True)
 
     def to_representation(self, instance: Question):
+        # Llama al método de representación de la superclase para obtener la representación básica de la pregunta
         data = super().to_representation(instance)
+        # Obtiene el ensayo al que pertenece la pregunta
         essay = instance.essays
+        # Agrega la ID del ensayo a los datos de la pregunta
         data['essay'] = essay.id
         return data
 
 
+# Serializador para mostrar el ensayo y todas sus preguntas y respuestas
 class EssayQuestionsAlternativeAllSerializer(EssaySerializer):
     question = QuestionsAlternativeAllSerializer(many=True, read_only=True)
 
 
-#serializador para crear una id unica cuando se crea un ensayo para un usuario
-class EssayUserSerializer(serializers.Serializer):
-    essay_id = serializers.IntegerField()
-
-    class Meta:
-        model = UserEssay
-        exclude = [*generic_fields]
-
-    def to_representation(self, instance:UserEssay):
-        data = super().to_representation(instance)
-        del data['essay_id']
-        data['new_id'] = instance.id
-        return data
-
-    def create(self, validated_data):
-        user = self.context['request'].user
-        essay_id = validated_data.get('essay_id')
-        essay = Essay.objects.get(id=essay_id)
-        user_essay = UserEssay.objects.create(user=user, essay=essay)
-        return user_essay
-
-
-#serializador que guarda las respuestas de un ensayo creado para un usuario
+# Serializador para guardar las respuestas de un ensayo creado para un usuario
 class SaveAnswersSerializer(serializers.Serializer):
     answer_ids = serializers.ListSerializer(child=serializers.IntegerField())
     user_essay_id = serializers.IntegerField()
     time_essay = serializers.CharField()
 
-    def validate(self, value):
-        answer_ids = value.get('answer_ids')
-        user_essay_id = value.get('user_essay_id')
-        user_essay = get_object_or_404(UserEssay, pk=user_essay_id)
-        answers = Answer.objects.filter(id__in=answer_ids, questions__essays=user_essay.essay)
-        if len(answer_ids) != len(answers):
-            raise serializers.ValidationError('respuestas no validas')
-        return value
+    def validate(self, data):
+        answer_ids = data.get('answer_ids')
+        user_essay_id = data.get('user_essay_id')
+        time_essay = data.get('time_essay')
+
+        # Obtener el ensayo personalizado del usuario
+        # user_essay = get_object_or_404(CustomEssay, pk=user_essay_id)
+        # Filtrar las respuestas según los IDs proporcionados y verificar si pertenecen al ensayo del usuario
+        # answers = Answer.objects.filter(id__in=answer_ids, questions__essays__custom_essay=user_essay)
+
+        # # Comprobar si el número de IDs de respuesta coincide con el número de respuestas válidas
+        # if len(answer_ids) != len(answers):
+        #     raise serializers.ValidationError('Respuestas no válidas.')
+
+        return data
 
     def create(self, validated_data):
         answer_ids = validated_data.get('answer_ids')
-        time_essay = validated_data.get('time_essay')
         user_essay_id = validated_data.get('user_essay_id')
-        user_essay = UserEssay.objects.get(pk=user_essay_id)
+        time_essay = validated_data.get('time_essay')
+
+        # Obtener el ensayo personalizado del usuario
+        user_essay = get_object_or_404(CustomEssay, pk=user_essay_id)
         user = self.context['request'].user
+        essay_answers = []
+
+        # Crear objetos AnswerEssayUser para cada respuesta seleccionada
         for answer_id in answer_ids:
-            answer = Answer.objects.get(pk=answer_id)
-            if AnswerEssayUser.objects.filter(answers=answer, essays=user_essay).exists():
-                raise serializers.ValidationError('Ya existe una respuesta para esta combinación de UserEssay y Answer')
-            essay_answers = AnswerEssayUser.objects.create(answers=answer, essays=user_essay, users=user, score=answer.right, time_essay=time_essay)
+            answer = get_object_or_404(Answer, pk=answer_id)
+
+            # Verificar si ya existe una respuesta para la combinación de UserEssay y Answer
+            if AnswerEssayUser.objects.filter(answers=answer, essays=user_essay, users=user).exists():
+                raise serializers.ValidationError('Ya existe una respuesta para esta combinación de UserEssay y Answer.')
+
+            # Crear el objeto AnswerEssayUser
+            essay_answer = AnswerEssayUser.objects.create(answers=answer, essays=user_essay, users=user,
+                                                          score=answer.right, time_essay=time_essay)
+            essay_answers.append(essay_answer)
+
         return essay_answers
 
-
+# Serializador para mostrar el historial de ensayos de un usuario
 class UserEssayHistorySerializer(serializers.ModelSerializer):
-    date = serializers.SerializerMethodField()
+    date = serializers.SerializerMethodField()  # Campo para obtener la fecha de creación del ensayo
 
     class Meta:
-        model = UserEssay
-        exclude = [*generic_fields, 'user','essay']
-
-    def get_custom(self, instance):
-        if not instance.essay.is_custom:
-            return "No"
-        return "Si"
+        model = CustomEssay
+        fields = ['id','name', 'is_custom', 'date','current_questions']  # Campos a incluir en la representación del ensayo
 
     def get_date(self, instance):
-        return instance.created.date()
-
-    def get_questions(self, instance):
-        return instance.essay.question.count()
+        return instance.created.date()  # Método para obtener la fecha de creación del ensayo
 
     def get_score(self, instance):
-        questions = self.get_questions(instance)
-        if questions == 0:
+        if instance.current_questions == 0:
+            return 0
+        if instance.current_questions is None:
             return 0
         answers = AnswerEssayUser.objects.filter(essays=instance)
-        right = 0
-        for answer in answers:
-            if answer.score == 1:
-                right = right + 1
-
-        score = 100 + (900 / questions) * right
+        right = answers.filter(score=1).count()
+        score = 100 + (900 / instance.current_questions) * right  # Cálculo del puntaje basado en las respuestas correctas
         return round(score)
 
-    def get_time_essay(self,instance):
+    def get_time(self, instance):
         answer_essay_user = instance.answers_essay_user.first()
         if answer_essay_user:
             return answer_essay_user.time_essay
         else:
+            return None  # Método para obtener el tiempo empleado en el ensayo
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['time_essay'] = self.get_time(instance)  # Incluir el tiempo empleado en el ensayo en la representación
+        data['puntaje'] = self.get_score(instance)  # Incluir el puntaje obtenido en la representación
+        # Verificar si hay registros en AnswerEssayUser para el CustomEssay actual
+        has_answer_essay_user = AnswerEssayUser.objects.filter(essays=instance).exists()
+        if not has_answer_essay_user:
+            # No mostrar el CustomEssay si no hay registros en AnswerEssayUser
             return None
 
-    def to_representation(self, instance: UserEssay):
-        data = super().to_representation(instance)
-        data['name'] = instance.essay.name
-        data['is_custom'] = self.get_custom(instance)
-        data['questions'] = self.get_questions(instance)
-        data['time'] = self.get_time_essay(instance)
-        data['puntaje'] = self.get_score(instance)
         return data
 
 
+class EssayAnswerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EssayAnswer
+        fields = ['id']  # Selecciona solo el campo 'id' del modelo EssayAnswer
 
 
-# filtros por fecha, por puntaje, por tema
+class CustomEssaySerializer(serializers.ModelSerializer):
+    essay_ids = serializers.ListField(write_only=True)  # Campo de lista solo para escritura
+
+    # Se utiliza el serializador EssayAnswerSerializer para el campo 'essay_custom'
+    essay_custom = EssayAnswerSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = CustomEssay
+        fields = ('id', 'is_custom', 'name', 'essay_ids', 'essay_custom', 'user','current_questions')
+
+    def validate(self, attrs):
+        essay_ids = attrs.get('essay_ids', [])
+        user = attrs.get('user')
+
+        if user is None:
+            raise serializers.ValidationError("Se debe proporcionar la id del usuario.")  # Validar que se proporcione la ID del usuario
+
+        # Verificar que los IDs de los ensayos existan en el modelo Essay
+        for essay_id in essay_ids:
+            try:
+                essay = Essay.objects.get(id=essay_id)
+            except Essay.DoesNotExist:
+                raise serializers.ValidationError(f"La ID del ensayo {essay_id} no existe.")  # Validar que los IDs de los ensayos existan en el modelo Essay
+
+        return attrs
+
+    def create(self, validated_data):
+        essay_ids = validated_data.pop('essay_ids', [])
+        custom_essay = CustomEssay.objects.create(**validated_data)  # Crear una instancia de CustomEssay con los datos validados
+
+        # Crear objetos EssayAnswer asociados al CustomEssay creado
+        for essay_id in essay_ids:
+            essay = Essay.objects.get(id=essay_id)
+            EssayAnswer.objects.create(essay=essay, custom_essay=custom_essay)
+
+        return custom_essay
+
+
+class CustomEssayQuestionSerializer(serializers.ModelSerializer):
+    # Campo 'questions' que es una lista de claves primarias relacionadas con el modelo Question
+    questions = serializers.ListField(child=serializers.PrimaryKeyRelatedField(queryset=Question.objects.filter(is_deleted=False)))
+
+    class Meta:
+        model = CustomEssayQuestion
+        fields = ['custom_essay', 'questions']  # Campos del serializador
+
+    def validate(self, attrs):
+        custom_essay = attrs.get('custom_essay')  # Obtener el ID del ensayo personalizado
+        questions = attrs.get('questions')  # Obtener las claves primarias de las preguntas seleccionadas
+
+        try:
+            custom_essay_obj = CustomEssay.objects.get(id=custom_essay)  # Obtener el objeto CustomEssay correspondiente al ID
+        except CustomEssay.DoesNotExist:
+            raise serializers.ValidationError('El ensayo personalizado no existe.')  # Validar que el ensayo personalizado exista
+
+        # Verificar que las preguntas existan en los ensayos seleccionados del ensayo personalizado
+        essay_ids = custom_essay_obj.essays.values_list('id', flat=True)  # Obtener los IDs de los ensayos predefinidos seleccionados
+        for question_id in questions:
+            try:
+                question_obj = Question.objects.get(id=question_id)  # Obtener el objeto Question correspondiente a la clave primaria
+                if question_obj.essays.filter(id__in=essay_ids).exists():
+                    continue  # Si la pregunta existe en los ensayos predefinidos seleccionados, continuar con la siguiente pregunta
+                else:
+                    raise serializers.ValidationError('Una o más preguntas no existen en los ensayos predefinidos seleccionados del ensayo personalizado.')  # Validar que las preguntas existan en los ensayos predefinidos seleccionados
+            except Question.DoesNotExist:
+                raise serializers.ValidationError('Una o más preguntas no existen en los ensayos predefinidos seleccionados del ensayo personalizado.')  # Validar que las preguntas existan en los ensayos predefinidos seleccionados
+
+        return attrs
+
+
+
+class CustomEssayResponseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomEssay
+        exclude = ('updated', 'is_deleted')
+
+#metodo para obtener los parametros de las respuestas
+    def get_answers(self,question):
+        answers = []
+        for answer in Answer.objects.filter(questions=question):
+            answer_dict = {
+                'label':answer.label,
+                'right':answer.right,
+                'answer_id':answer.id
+            }
+            answers.append(answer_dict)
+        return answers
+
+#metodo para obtener las preguntas y linkear las alternativas
+    def get_question(self,answer):
+        questions = []
+        for question in Question.objects.filter(answer__in=answer):
+            question_dict = {
+                'question': question.question,
+                'link': question.link_resolution,
+                'answer': self.get_answers(question.id)
+            }
+            questions.append(question_dict)
+        return questions
+
+
+    def get_score(self, instance):
+        if instance.current_questions == 0:
+            return 0
+        if instance.current_questions is None:
+            return 0
+        answers = AnswerEssayUser.objects.filter(essays=instance)
+        right = answers.filter(score=1).count()
+        score = 100 + (900 / instance.current_questions) * right  # Cálculo del puntaje basado en las respuestas correctas
+        return round(score)
+
+
+    def to_representation(self, instance: CustomEssay):
+        data = super().to_representation(instance)
+        answers_list=[]
+        answers = instance.answers_essay_user.filter(essays=instance)
+        for answer in answers:
+            answers_list.append(answer.answers.id)
+        print(answers_list)
+        data['question'] = self.get_question(answers_list) #trae todos los datos a partir de las respuestas que se respondieron para un ensayo en especifico
+        data['answered'] = answers_list #entrega el listado con las id de las respuestas para el ensayo
+        data['score'] = self.get_score(instance)
+        return data
+
+####################################
+
+class AnswerSerializerSpecific(serializers.ModelSerializer):
+
+    class Meta:
+        model = Answer
+        fields = ['id', 'label', 'right']
+
+class QuestionSerializerSpecific(serializers.ModelSerializer):
+
+    class Meta:
+        model = Question
+        fields = ['answer']
+
+#serializador que retornara las respuestas de las preguntas
+class QuestionAnswerSerializer(QuestionSerializerSpecific): #Heredar de QuestionSerializer
+
+        answer = AnswerSerializerSpecific(many=True, read_only=True) #instancia de las respuestas
+        #debe llamare igual que el related-name de la realcion 
+        #def to_representation(self, instance: Question):
+          #  data = super().to_representation(instance)#usara el metodo to respresentation de la clase QuestionSerializer para la instacia del modelo questions
+         #   essay = instance.essays
+           # data['essay'] = essay.id
+            #return data
+
+####################################

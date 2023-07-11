@@ -1,1 +1,1 @@
-exec(open('scripts/script.py').read())
+exec(open('Scripts/script.py').read())
