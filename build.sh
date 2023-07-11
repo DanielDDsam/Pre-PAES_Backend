@@ -6,4 +6,4 @@ pip install -r requirements.txt
 
 python manage.py collectstatic --no-input
 python manage.py migrate
-py manage.py shell < Scripts/main.py
+python manage.py shell < Scripts/main.py
