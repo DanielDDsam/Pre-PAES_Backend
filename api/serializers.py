@@ -187,7 +187,7 @@ class EssaySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Essay
-        exclude = [*generic_fields, 'users']
+        exclude = [*generic_fields]
 
 
 # Serializador para AnswerEssayUser

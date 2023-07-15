@@ -417,8 +417,31 @@ dataNumeros = [
           },
         ],
       },
-{
+        {
         'question': "¿Qué porcentaje es 4740 de 15800 ?",
+        'subject': "numeros",
+        'link_resolution': "https://www.youtube.com/embed/2nghljBMp1k?start=814",
+        'answer': [
+          {
+            'label': "[30]%",
+            'right': 1,
+          },
+          {
+            'label': "[3,\\bar{3}]%",
+            'right': 0,
+          },
+          {
+            'label': "[3]%",
+            'right': 0,
+          },
+          {
+            'label': "[0,3]%",
+            'right': 0,
+          },
+        ],
+      },
+      {
+        'question': "¿Cuál es el valor de [\frac{\left(0{,}002\right) \cdot \left(0{,}02\right)}{0{,}01}]?",
         'subject': "numeros",
         'link_resolution': "https://www.youtube.com/embed/2nghljBMp1k?start=814",
         'answer': [

@@ -49,6 +49,9 @@ class Users(AbstractBaseUser,GenericAttributes):
     )
     is_admin = models.BooleanField(**common_args,default=False)
     username = models.TextField(**common_args)
+    #schoolType = models.CharField(**common_args, max_length=255)
+    #academicDegree = models.CharField(**common_args, max_length=255)
+
     objects = UserManager()
 
     USERNAME_FIELD = 'email'
@@ -115,3 +118,11 @@ class AnswerEssayUser(GenericAttributes):
     users = models.ForeignKey(Users, **common_args, on_delete=models.CASCADE, related_name='answers_essay_user')
     score = models.IntegerField(**common_args)
     time_essay = models.TextField(**common_args)
+
+class UserQuestions(GenericAttributes):
+    question = models.OneToOneField(Question, related_name='UserQuestion', on_delete=models.CASCADE)
+    users = models.ForeignKey(Users, **common_args, on_delete=models.CASCADE, related_name='question_user_difficult')
+    state = models.CharField(**common_args, max_length=255)
+    difdicult = models.CharField(**common_args, max_length=255)
+
+    
