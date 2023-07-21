@@ -29,10 +29,15 @@ urlpatterns = [
     re_path(r'^answers/(?P<pk>[0-9]+)/$', views.AnswerRetrieveUpdateDestroy.as_view()),#Endpoint para consultar, eliminar, actualizar una respuesta específica
 
     re_path(r'^questions_alternativeSpecific/(?P<pk>[0-9]+)/$', views.questionAnswers.as_view()),#endpoint para consultar por un ensayo en especifico con todas sus  preguntas y alternativas
+    re_path(r'^question_oneQuestion/$', views.oneQuestion.as_view()),#endpoint para consultar una sola pregunta
 
     re_path(r'^questions_alternative/$', views.QuestionsAlternativeAllView.as_view()),#Endpoint para consultar todas las preguntas y alternativas de un ensayo específico
     re_path(r'^score_user/all/$', views.AnswerEssayUserView.as_view()),#Endpoint para obtener el puntaje del usuario
     re_path(r'^submit_answers/$', views.SaveAnswersView.as_view()),#Endpoint para guardar las respuestas del usuario
+
+    re_path(r'^submit_one_answers/$', views.SaveOneAnswer.as_view()),#Endpoint para guardar una respuestas del usuario
+    re_path(r'^submit_answer_state/$', views.SaveUserQuestion.as_view()),#Endpoint para guardar una respuestas del usuario
+
     re_path(r'^history/(?P<pk>[0-9]+)/$', views.UserEssayHistoryView.as_view()),#Endpoint para consultar el historial de ensayos de un usuario
     re_path(r'^custom_essay_view/(?P<pk>[0-9]+)/$', views.CustomEssayResponseView.as_view()),#Endpoint para consultar un ensayo mediante su id entregal o que se respondio
     re_path(r'^custom_essays/$', views.CustomEssayView.as_view()),#Endpoint para consultar y crear ensayos personalizados

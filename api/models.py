@@ -94,6 +94,13 @@ class Question(GenericAttributes):
     subject = models.TextField(**common_args)
     link_resolution = models.URLField(**common_args)
     essays = models.ForeignKey(Essay, **common_args,on_delete=models.CASCADE, related_name='question')
+    users = models.ManyToManyField(Users, blank=True, through='UserQuestionState', related_name='question_user') #18-07
+
+# Clase del modelo UserQuestionState
+class UserQuestionState(GenericAttributes): #18-07
+    question = models.ForeignKey(Question, **common_args, on_delete=models.CASCADE,related_name='user_question_state')
+    users = models.ForeignKey(Users, **common_args, on_delete=models.CASCADE, related_name='user_question_state')
+    state = models.TextField(**common_args)
 
 
 # Clase del modelo CustomEssayQuestion

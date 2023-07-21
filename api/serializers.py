@@ -264,6 +264,50 @@ class SaveAnswersSerializer(serializers.Serializer):
 
         return essay_answers
 
+class SaveAnswerSerializer(serializers.Serializer):
+    answer_id = serializers.IntegerField()
+    user_essay_id = serializers.IntegerField()
+    time_essay = serializers.CharField()
+
+    def validate(self, data):
+        answer_id = data.get('answer_id')
+        user_essay_id = data.get('user_essay_id')
+        time_essay = data.get('time_essay')
+
+        # Obtener el ensayo personalizado del usuario
+        # user_essay = get_object_or_404(CustomEssay, pk=user_essay_id)
+        # Filtrar las respuestas según los IDs proporcionados y verificar si pertenecen al ensayo del usuario
+        # answers = Answer.objects.filter(id__in=answer_ids, questions__essays__custom_essay=user_essay)
+
+        # # Comprobar si el número de IDs de respuesta coincide con el número de respuestas válidas
+        # if len(answer_ids) != len(answers):
+        #     raise serializers.ValidationError('Respuestas no válidas.')
+
+        return data
+
+    def create(self, validated_data):
+        answer_id = validated_data.get('answer_id')
+        user_essay_id = validated_data.get('user_essay_id')
+        time_essay = validated_data.get('time_essay')
+
+        print(answer_id)
+        # Obtener el ensayo personalizado del usuario
+        user_essay = get_object_or_404(CustomEssay, pk=user_essay_id)
+        user = self.context['request'].user
+
+
+        # Crear objetos AnswerEssayUser para la respuesta seleccionada
+        answer = get_object_or_404(Answer, pk=answer_id)
+
+        if AnswerEssayUser.objects.filter(answers=answer, essays=user_essay, users=user).exists():
+                raise serializers.ValidationError('Ya existe una respuesta para esta combinación de UserEssay y Answer.')
+        
+        essay_answer = AnswerEssayUser.objects.create(answers=answer, essays=user_essay, users=user,
+                                                          score=answer.right, time_essay=time_essay)
+
+
+        return essay_answer
+
 # Serializador para mostrar el historial de ensayos de un usuario
 class UserEssayHistorySerializer(serializers.ModelSerializer):
     date = serializers.SerializerMethodField()  # Campo para obtener la fecha de creación del ensayo
@@ -459,5 +503,63 @@ class QuestionAnswerSerializer(QuestionSerializerSpecific): #Heredar de Question
          #   essay = instance.essays
            # data['essay'] = essay.id
             #return data
+
+class QuestionOneSerializer(QuestionSerializer):
+    answer = AnswerSerializerSpecific(many=True, read_only=True)
+
+class UserQuestionStateSerializer(serializers.ModelSerializer): #18-07 este solo se usara para mostar los datos de esta tabla, ya que como tiene elementos de otras, lo idel es usar el de abajo para crearlos
+    class Meta:
+        model = UserQuestionState
+        fields = ['state','question_id','user_id']
+
+class SaveUserQuestionState(serializers.Serializer): #18-07
+    answer_id = serializers.IntegerField()
+
+    def validate(self, data):
+        answer_id = data.get('answer_id')
+
+        # Obtener el ensayo personalizado del usuario
+        # user_essay = get_object_or_404(CustomEssay, pk=user_essay_id)
+        # Filtrar las respuestas según los IDs proporcionados y verificar si pertenecen al ensayo del usuario
+        # answers = Answer.objects.filter(id__in=answer_ids, questions__essays__custom_essay=user_essay)
+
+        # # Comprobar si el número de IDs de respuesta coincide con el número de respuestas válidas
+        # if len(answer_ids) != len(answers):
+        #     raise serializers.ValidationError('Respuestas no válidas.')
+
+        return data
+    
+    def validarExistencia(self, question, user): #todo esto porque tiene daots de otras tablas, verificar si se puede hacer de otra manera
+        if UserQuestionState.objects.filter(question=question, users=user).exists():
+            return True
+        return False
+
+    def create(self, validated_data):
+        answer_id = validated_data.get('answer_id') #obtenemos el id de la respuesta
+   
+        # Obtener la respuesta que contesto el usuario, para luego obtener la pregunta
+        answer = get_object_or_404(Answer, pk=answer_id)
+        question = get_object_or_404(Question, pk=answer.questions_id)
+
+        #obtenemos el usuario
+        user = self.context['request'].user
+
+        
+        if self.validarExistencia(question, user) == True:
+            instance = UserQuestionState.objects.filter(question=question, users=user)#obtenemos la instancia
+          
+            if answer.right == 0:
+                instance.update(question=question, users=user,state='Reforzar')
+                return instance
+            else:
+                instance.update(question=question, users=user,state='Correcta')
+                return instance
+        else:
+            if answer.right == 0:
+                user_question = UserQuestionState.objects.create(question=question, users=user,state='Reforzar')
+            else:
+                user_question = UserQuestionState.objects.create(question=question, users=user,state='Correcta')
+            
+        return user_question
 
 ####################################

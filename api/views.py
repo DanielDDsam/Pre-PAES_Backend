@@ -9,7 +9,7 @@ from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth import authenticate, logout
 from api.renderers import UserRenderer
 from django_filters.rest_framework import DjangoFilterBackend
-
+from django.db.models.functions import Random
 
 # Create your views here.
 
@@ -216,3 +216,78 @@ class questionAnswers(generics.RetrieveAPIView):
         question_pk = self.kwargs['pk'] #obtenemos la pk de la url
         queryset = Question.objects.filter(id = question_pk)
         return queryset
+
+class oneQuestion(generics.ListAPIView):
+    serializer_class = QuestionOneSerializer
+    filter_backends = [DjangoFilterBackend]
+
+    def get_queryset(self):
+        #data = self.request.data.get('ids_a_evitar', [])
+        #data = [int(id) for id in data if id.isdigit()]  # Convertir a enteros solo los elementos numéricos
+        #queryset = Question.objects.filter(id = question_pk)
+        #print(data)
+        #UserQuestionState_ids = UserQuestionState.objects.values_list('id', flat=True) #agregar el usuario a que hace referencia
+        #  
+        user = self.request.user
+        print(user.id)
+        UserQuestionState_ids = UserQuestionState.objects.filter(users_id = user.id).values_list('id', flat=True) #agregar el usuario a que hace referencia 
+        print('user question')
+        print(UserQuestionState_ids)
+
+        if UserQuestionState_ids:
+            queryset = Question.objects.all().exclude(id__in=UserQuestionState_ids).order_by('?') #agregar el else
+            #print(queryset.first())
+        else:
+            queryset = Question.objects.all().order_by('?')
+        return queryset
+
+    def list(self, request):
+        # Note the use of `get_queryset()` instead of `self.queryset`
+        queryset = self.get_queryset().first()
+        serializer = QuestionOneSerializer(queryset) 
+        return Response(serializer.data)
+
+class SaveOneAnswer(generics.CreateAPIView):
+    #permission_classes = (IsAuthenticated,)  # Permiso requerido para acceder a la vista
+    serializer_class = SaveAnswerSerializer  # Clase serializadora utilizada
+
+    def post(self, request, *args, **kwargs): 
+        answer_serializer = self.serializer_class(data = request.data, context={'request': request})
+        #print(answer_serializer)
+        if answer_serializer.is_valid():
+            answer_serializer.save()  # Guardar los datos
+
+            return Response({'message': 'CREATED'}, status=status.HTTP_201_CREATED)  # Devolver una respuesta exitosa
+        else:
+            answer_serializer.is_valid(raise_exception=True)
+
+
+class SaveUserQuestion(generics.CreateAPIView):
+
+    serializer_class = SaveUserQuestionState
+
+    def create(self, request, *args, **kwargs): 
+        question_user_serializer = self.serializer_class(data=request.data, context={'request': request}) 
+        if question_user_serializer.is_valid():
+            question_user_serializer.save()  # Guardar los datos
+            return Response({'message': 'CREATED'}, status=status.HTTP_201_CREATED)  # Devolver una respuesta exitosa
+        else:
+            question_user_serializer.is_valid(raise_exception=True)
+
+    
+    #def create_or_update(self, request): #definir comportamiento update delete
+     #   question_user_serializer = SaveUserQuestionState(data = request.data, context={'request': request})
+      #  question_user_serializer.is_valid()
+       # question_user_serializer.save()
+        #serializer_data = question_user_serializer.data
+        
+        # Acceder al valor de "exist"
+        #exist_value = serializer_data.get('exist',False)
+        #print(exist_value)
+        ##
+    
+        #question_user_serializer.is_valid()
+        
+        #print("state")
+        #print(question_user_serializer)
+
