@@ -132,4 +132,13 @@ class UserQuestions(GenericAttributes):
     state = models.CharField(**common_args, max_length=255)
     difdicult = models.CharField(**common_args, max_length=255)
 
+class UserEssayConfig(GenericAttributes): #25-07
+    users = models.ForeignKey(Users, **common_args, on_delete=models.CASCADE, related_name='user_Essay_Config')
+    essays = models.ManyToManyField(Essay, blank=True, through='UserEssayConfigTypes', related_name='user_Essay_Config')
+    questionNumber = models.IntegerField(**common_args)
+
+class UserEssayConfigTypes(GenericAttributes): #25-07
+    users_essasy_config = models.ForeignKey(UserEssayConfig, **common_args, on_delete=models.CASCADE, related_name='user_Essay_Config_types')
+    essay = models.ForeignKey(Essay, **common_args, on_delete=models.CASCADE, related_name='user_Essay_Config_types')
+
     

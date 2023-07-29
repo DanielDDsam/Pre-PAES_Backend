@@ -546,20 +546,73 @@ class SaveUserQuestionState(serializers.Serializer): #18-07
 
         
         if self.validarExistencia(question, user) == True:
-            instance = UserQuestionState.objects.filter(question=question, users=user)#obtenemos la instancia
-          
+            #instance = UserQuestionState.objects.filter(question=question, users=user)#obtenemos la instancia
+            instance = get_object_or_404(UserQuestionState, question=question, users=user) #si existe obtenemos la instancia
+            print(instance)
             if answer.right == 0:
-                instance.update(question=question, users=user,state='Reforzar')
-                return instance
+                #instance.update(question=question, users=user,state='Reforzar')
+                #return instance
+                instance.state = 'Reforzar'
+                instance.save()#guardamos el cambio, esto permite modificar el campo update
             else:
-                instance.update(question=question, users=user,state='Correcta')
-                return instance
-        else:
+                #instance.update(question=question, users=user,state='Correcta')
+                #return instance
+                instance.state = 'Correcta'
+                instance.save()#guardamos el cambio, esto permite modificar el campo update
+        else:#si no existe creamos una instancia
             if answer.right == 0:
-                user_question = UserQuestionState.objects.create(question=question, users=user,state='Reforzar')
+                instance = UserQuestionState.objects.create(question=question, users=user,state='Reforzar')
             else:
-                user_question = UserQuestionState.objects.create(question=question, users=user,state='Correcta')
-            
-        return user_question
+                instance = UserQuestionState.objects.create(question=question, users=user,state='Correcta')
+        
+        
+        return instance
 
 ####################################
+#25-07
+
+class UserEssayConfigTypesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserEssayConfigTypes
+        fields = ['id', 'users_essasy_config_id', 'essay_id']
+
+class UserEssayConfigSerializer(serializers.ModelSerializer):
+    essay_ids = serializers.ListField(write_only=True)  # Campo de lista solo para escritura
+    #essays = UserEssayConfigTypesSerializer(many = True, read_only = True) #indicamos el mucho de la relación, en este caso el tipo de ensayo
+    
+    class Meta:
+        model = UserEssayConfig
+        #fields = ['users', 'essay_ids', 'questionNumber']
+        exclude = [*generic_fields]
+    
+    def create(self, validated_data):
+        print(validated_data)
+        essay_ids = validated_data.pop('essay_ids', [])#sacamos los id de los tipos de ensayos de los datos validados
+        print(validated_data)
+        user_config = UserEssayConfig.objects.create(**validated_data)  # Crear una instancia de la configuración con los datos validados
+
+        # Crear objetos EssayAnswer asociados al CustomEssay creado
+        for essay_id in essay_ids:
+            essay = Essay.objects.get(id=essay_id)
+            UserEssayConfigTypes.objects.create(users_essasy_config = user_config,essay=essay)
+
+        return user_config
+    
+    def update(self, instance, validated_data):
+        essay_ids = validated_data.pop('essay_ids', [])  # sacamos los id de los tipos de ensayos de los datos validados
+
+        updateConfig = super().update(instance, validated_data)
+        #updateConfig.essays.exclude(id__in=essay_ids).delete()
+
+        # Crear o actualizar objetos UserEssayConfigTypes asociados al UserEssayConfig
+        for essay_id in essay_ids:#eliminamos sus configuraciones anteriores
+            essay = Essay.objects.get(id=essay_id)
+            UserEssayConfigTypes.objects.filter(users_essasy_config=updateConfig).delete()#obtenemos primeros las instancias y las eliminamos
+
+        for essay_id in essay_ids:
+            essay = Essay.objects.get(id=essay_id)
+            UserEssayConfigTypes.objects.update_or_create(users_essasy_config=updateConfig, essay=essay)
+            
+
+        updateConfig.save()
+        return updateConfig
