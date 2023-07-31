@@ -10,7 +10,8 @@ from django.contrib.auth import authenticate, logout
 from api.renderers import UserRenderer
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models.functions import Random
-
+import random
+import math
 # Create your views here.
 
 #funcion para obtener jwt para el usuario cuando hace login
@@ -247,6 +248,86 @@ class oneQuestion(generics.ListAPIView):
         serializer = QuestionOneSerializer(queryset) 
         return Response(serializer.data)
 
+class oneQuestionRules(generics.ListAPIView):
+    serializer_class = QuestionOneSerializer
+    filter_backends = [DjangoFilterBackend]
+
+    def get_queryset(self):
+
+        user = self.request.user#obtenemos el usuario actual 
+        UserQuestionState_ids = UserQuestionState.objects.filter(users_id = user.id).values_list('id', flat=True) #agregar el usuario a que hace referencia 
+        pregunta = self.obtener_pregunta(user)
+
+        if pregunta == 'nueva':
+            if UserQuestionState_ids:
+                queryset = Question.objects.all().exclude(id__in=UserQuestionState_ids).order_by('?') #agregar el else
+                #print(queryset.first())
+            else:
+                queryset = Question.objects.all().order_by('?')
+        else:
+            queryset = Question.objects.filter(id=pregunta.question_id) 
+        return queryset
+
+    def list(self, request):
+        # Note the use of `get_queryset()` instead of `self.queryset`
+        print('queryset')
+        queryset = self.get_queryset().first()
+        serializer = QuestionOneSerializer(queryset) 
+        print(queryset)
+        return Response(serializer.data)
+    
+    def obtener_pregunta(self, user):
+    # Contadores de preguntas correctas y reforzar
+        create_data = UserQuestionState.objects.filter(users_id = user.id).order_by('created')
+        update_data = UserQuestionState.objects.filter(users_id = user.id).order_by('updated')
+        allquestions = UserQuestionState.objects.filter(users_id = user.id)
+ 
+        todos_los_elementos = list(create_data)[-2:] + list(update_data)[-2:]
+        todos_los_elementos.sort(key=lambda x: x.created if x.created else x.updated, reverse=True)
+        questionState = []
+        questionState.extend(todos_los_elementos)
+        
+        for i in range(len(todos_los_elementos)):
+            
+            if(i == 0):
+                if (todos_los_elementos[i] == todos_los_elementos[i+1]):
+                    del questionState[i+1]
+            else:
+                if (todos_los_elementos[0] == todos_los_elementos[i]):
+                    del questionState[i]
+
+        print(questionState)
+
+        preguntas_correctas = sum(1 for pregunta in allquestions if pregunta.state == 'Correcta')
+        preguntas_erroneas = sum(1 for pregunta in allquestions if pregunta.state == 'Reforzar')
+        print("Preguntas correctas:", preguntas_correctas)
+        print("Preguntas para reforzar:", preguntas_erroneas)
+
+        # Verificar si se han respondido al menos 3 preguntas erróneas y 3 preguntas para reforzar
+        if preguntas_correctas + preguntas_erroneas >= 6:
+            # Obtener las últimas 2 respuestas del usuario
+
+            ultimas_respuestas = [pregunta.state for pregunta in questionState[-2:]]
+            # Probabilidad de cambiar una pregunta "correcta" a "reforzar" o "nueva"
+            if ultimas_respuestas == ['Correcta', 'Correcta'] and random.random() < 0.7:
+                # Cambiar una pregunta "correcta" a "reforzar"
+                preguntas_erroneas_list = [pregunta for pregunta in allquestions if pregunta.state == 'Reforzar']
+                pregunta_seleccionada = random.choice(preguntas_erroneas_list)
+                pass
+            elif ultimas_respuestas == ['Reforzar', 'Reforzar'] and random.random() < 0.7:
+                # Cambiar una pregunta "errónea" a "correcta"
+                preguntas_correctas_list = [pregunta for pregunta in allquestions if pregunta.state == 'Correcta']
+                pregunta_seleccionada = random.choice(preguntas_correctas_list)
+                pass
+            else:
+                # Indicar que la pregunta debe ser nueva
+                return 'nueva'
+        else:
+            # Indicar que la pregunta debe ser nueva
+            return 'nueva'
+        #print(pregunta_seleccionada.id)
+        return pregunta_seleccionada
+
 class SaveOneAnswer(generics.CreateAPIView):
     #permission_classes = (IsAuthenticated,)  # Permiso requerido para acceder a la vista
     serializer_class = SaveAnswerSerializer  # Clase serializadora utilizada
@@ -291,3 +372,64 @@ class SaveUserQuestion(generics.CreateAPIView):
         #print("state")
         #print(question_user_serializer)
 
+#25-07 para guardar la configuración
+class UserEssayConfigCreate(generics.CreateAPIView):
+    queryset = UserEssayConfig.objects.all()
+    serializer_class = UserEssayConfigSerializer
+
+class UserEssayConfigRetrieveUpdate(generics.RetrieveUpdateAPIView):
+    queryset = UserEssayConfig.objects.filter().order_by('pk')  # Obtiene todos los usuarios ordenados por su clave primaria
+    serializer_class = UserEssayConfigSerializer
+
+class UserEssayConfigList(generics.ListAPIView):
+    #queryset = UserEssayConfig.objects.prefetch_related('user_Essay_Config_types') este prefetch realiza lo mismo que lo definido en el queryset
+    serializer_class = UserEssayConfigSerializer
+    #LIST SOLO LOS DE UN USUARIO
+    def get_queryset(self): 
+        user = self.request.user
+        queryset = UserEssayConfig.objects.filter(users_id = user.id)
+        return queryset
+
+#27-07
+
+class QuestionListType(generics.ListAPIView):
+    serializer_class = QuestionSerializer  # Clase serializadora utilizada
+    def get_queryset(self): 
+        tiposDePreguntas = self.request.data.get('tiposDePreguntas', '') #
+        numeroDePreguntas = self.request.data.get('numeroDePreguntas', '') #
+        UserQuestionState_ids = UserQuestionState.objects.filter(users_id = self.request.user.id).values_list('id', flat=True)
+        cantidadPorTipo = 0
+        resto = 0
+        preguntas = []
+        cantidadPorPreguntas = [] 
+        if tiposDePreguntas is not None:
+
+            
+            if type(tiposDePreguntas) is not list:
+                queryset = Question.objects.filter(essays_id=tiposDePreguntas).exclude(id__in=UserQuestionState_ids).order_by('?')[:numeroDePreguntas]
+            else:
+                #identificar cuanto es para cada pregunta si hay mas de una
+                cantidadPorTipo = math.floor(numeroDePreguntas/len(tiposDePreguntas))
+
+                for i in range(len(tiposDePreguntas)): #alacenamos la cantidad por pregunta
+                        cantidadPorPreguntas.append(cantidadPorTipo)
+
+                #identificar cual de todos los tipos tendra más si la suma no es exacta
+                if cantidadPorTipo*len(tiposDePreguntas) != numeroDePreguntas:
+                    resto = numeroDePreguntas - cantidadPorTipo*len(tiposDePreguntas)#alacenamos la diferencia para repartirlas entre las preguntas
+                    
+                    for i in range(resto):#Agregamos de manera aleatoria la diferencia a cada una de las preguntas
+                        cantidadPorPreguntas[random.randint(0, len(tiposDePreguntas)-1)] +=1
+                    
+                    for i in range(len(tiposDePreguntas)):
+                        queryset = Question.objects.filter(essays_id=tiposDePreguntas[i]).exclude(id__in=UserQuestionState_ids).order_by('?')[:cantidadPorPreguntas[i]]
+                        preguntas.extend(queryset)
+                    
+                    return preguntas
+                else:
+                    queryset = Question.objects.filter(essays_id__in=tiposDePreguntas).exclude(id__in=UserQuestionState_ids).order_by('?')[:numeroDePreguntas]#si es exacto el numero de pregunta es igual por cada uno
+        else:
+            raise serializers.ValidationError("Se debe proporcionar los tipos de preguntas")
+    
+        
+        return queryset
