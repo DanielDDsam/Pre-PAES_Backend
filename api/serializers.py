@@ -86,6 +86,34 @@ class PasswordChangeSerializer(serializers.Serializer):
         user.save()
         return attrs
 
+class PasswordChangeProfileSerializer(serializers.Serializer):
+    actualPassword = serializers.CharField(max_length=255, style={'input_type': 'password'}, write_only=True)
+    password = serializers.CharField(max_length=255, style={'input_type': 'password'}, write_only=True)
+    password2 = serializers.CharField(max_length=255, style={'input_type': 'password'}, write_only=True)
+
+    class Meta:
+        fields = ['actualPassword','password', 'password2']
+
+    def validate(self, attrs):
+        actualPassword = attrs.get('actualPassword')
+        password = attrs.get('password')
+        password2 = attrs.get('password2')
+        user = self.context.get('user')
+
+        # Verificar que las contraseñas coincidan
+        if password != password2:
+            raise serializers.ValidationError("Las contraseñas no coinciden")
+
+        # Cambiar la contraseña del usuario
+        if user.check_password(password):
+            raise serializers.ValidationError("La nueva contraseña debe ser diferente a la contraseña actual")
+        
+        if user.check_password(actualPassword):
+            user.set_password(password)
+            user.save()
+            return attrs
+        else:
+            raise serializers.ValidationError("La contraseña actual no es valida")
 
 # Serializador para enviar un correo de restablecimiento de contraseña
 class SendPasswordResetEmailSerializer(serializers.Serializer):
@@ -171,7 +199,7 @@ class QuestionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Question
-        exclude = [*generic_fields, 'essays']
+        exclude = [*generic_fields, 'type_question']
 
 
 # Serializador para crear Question
@@ -186,7 +214,7 @@ class QuestionCreateSerializer(serializers.ModelSerializer):
 class EssaySerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = Essay
+        model = MathType
         exclude = [*generic_fields]
 
 
@@ -205,10 +233,10 @@ class QuestionsAlternativeAllSerializer(QuestionSerializer):
     def to_representation(self, instance: Question):
         # Llama al método de representación de la superclase para obtener la representación básica de la pregunta
         data = super().to_representation(instance)
-        # Obtiene el ensayo al que pertenece la pregunta
-        essay = instance.essays
+        # Obtiene el tipo de ensayo al que pertenece la pregunta
+        type_question = instance.type_question
         # Agrega la ID del ensayo a los datos de la pregunta
-        data['essay'] = essay.id
+        data['type_question'] = type_question.id
         return data
 
 
@@ -349,46 +377,46 @@ class UserEssayHistorySerializer(serializers.ModelSerializer):
         return data
 
 
-class EssayAnswerSerializer(serializers.ModelSerializer):
+class TypesEssaySerializer(serializers.ModelSerializer):
     class Meta:
-        model = EssayAnswer
+        model = TypesEssayCustom
         fields = ['id']  # Selecciona solo el campo 'id' del modelo EssayAnswer
 
 
 class CustomEssaySerializer(serializers.ModelSerializer):
-    essay_ids = serializers.ListField(write_only=True)  # Campo de lista solo para escritura
+    type_math_ids = serializers.ListField(write_only=True)  # Campo de lista solo para escritura
 
     # Se utiliza el serializador EssayAnswerSerializer para el campo 'essay_custom'
-    essay_custom = EssayAnswerSerializer(many=True, read_only=True)
+    essay_custom = TypesEssaySerializer(many=True, read_only=True)#10-08-2023 ver esto y verificar si no es necesario
 
     class Meta:
         model = CustomEssay
-        fields = ('id', 'is_custom', 'name', 'essay_ids', 'essay_custom', 'user','current_questions')
+        fields = ('id', 'is_custom', 'name', 'type_math_ids', 'essay_custom', 'user','current_questions')
 
     def validate(self, attrs):
-        essay_ids = attrs.get('essay_ids', [])
+        type_math_ids = attrs.get('type_math_ids', [])
         user = attrs.get('user')
 
         if user is None:
             raise serializers.ValidationError("Se debe proporcionar la id del usuario.")  # Validar que se proporcione la ID del usuario
 
-        # Verificar que los IDs de los ensayos existan en el modelo Essay
-        for essay_id in essay_ids:
+        # Verificar que los IDs de los tipos de ensayos de matematicas que existan en typemath
+        for type_math_id in type_math_ids:
             try:
-                essay = Essay.objects.get(id=essay_id)
-            except Essay.DoesNotExist:
-                raise serializers.ValidationError(f"La ID del ensayo {essay_id} no existe.")  # Validar que los IDs de los ensayos existan en el modelo Essay
+                essay = MathType.objects.get(id=type_math_id)
+            except MathType.DoesNotExist:
+                raise serializers.ValidationError(f"La ID del tipo de matematica {type_math_id} no existe.")  # Validar que los IDs de los tipos de matematicas existan en el modelo TypeMath
 
         return attrs
 
     def create(self, validated_data):
-        essay_ids = validated_data.pop('essay_ids', [])
+        type_math_ids = validated_data.pop('type_math_ids', [])
         custom_essay = CustomEssay.objects.create(**validated_data)  # Crear una instancia de CustomEssay con los datos validados
 
         # Crear objetos EssayAnswer asociados al CustomEssay creado
-        for essay_id in essay_ids:
-            essay = Essay.objects.get(id=essay_id)
-            EssayAnswer.objects.create(essay=essay, custom_essay=custom_essay)
+        for type_math_id in type_math_ids:
+            type_essays = MathType.objects.get(id=type_math_id)
+            TypesEssayCustom.objects.create(type_essays=type_essays, custom_essay=custom_essay)
 
         return custom_essay
 
@@ -574,10 +602,10 @@ class SaveUserQuestionState(serializers.Serializer): #18-07
 class UserEssayConfigTypesSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserEssayConfigTypes
-        fields = ['id', 'users_essasy_config_id', 'essay_id']
+        fields = ['id', 'users_essasy_config_id', 'essay_types_id']
 
 class UserEssayConfigSerializer(serializers.ModelSerializer):
-    essay_ids = serializers.ListField(write_only=True)  # Campo de lista solo para escritura
+    type_math_ids = serializers.ListField(write_only=True)  # Campo de lista solo para escritura
     #essays = UserEssayConfigTypesSerializer(many = True, read_only = True) #indicamos el mucho de la relación, en este caso el tipo de ensayo
     
     class Meta:
@@ -587,31 +615,32 @@ class UserEssayConfigSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         print(validated_data)
-        essay_ids = validated_data.pop('essay_ids', [])#sacamos los id de los tipos de ensayos de los datos validados
+        type_math_ids = validated_data.pop('type_math_ids', [])#sacamos los id de los tipos de ensayos de los datos validados
         print(validated_data)
         user_config = UserEssayConfig.objects.create(**validated_data)  # Crear una instancia de la configuración con los datos validados
 
         # Crear objetos EssayAnswer asociados al CustomEssay creado
-        for essay_id in essay_ids:
-            essay = Essay.objects.get(id=essay_id)
-            UserEssayConfigTypes.objects.create(users_essasy_config = user_config,essay=essay)
+        for type_math_id in type_math_ids:
+            essay = MathType.objects.get(id=type_math_id)
+            UserEssayConfigTypes.objects.create(users_essasy_config = user_config,essay_types=essay)
 
         return user_config
     
     def update(self, instance, validated_data):
-        essay_ids = validated_data.pop('essay_ids', [])  # sacamos los id de los tipos de ensayos de los datos validados
+        type_math_ids = validated_data.pop('type_math_ids', [])  # sacamos los id de los tipos de ensayos de los datos validados
 
         updateConfig = super().update(instance, validated_data)
         #updateConfig.essays.exclude(id__in=essay_ids).delete()
 
         # Crear o actualizar objetos UserEssayConfigTypes asociados al UserEssayConfig
-        for essay_id in essay_ids:#eliminamos sus configuraciones anteriores
-            essay = Essay.objects.get(id=essay_id)
+        print(updateConfig)
+
+        if type_math_ids: #eliminamos sus configuraciones anteriores
             UserEssayConfigTypes.objects.filter(users_essasy_config=updateConfig).delete()#obtenemos primeros las instancias y las eliminamos
 
-        for essay_id in essay_ids:
-            essay = Essay.objects.get(id=essay_id)
-            UserEssayConfigTypes.objects.update_or_create(users_essasy_config=updateConfig, essay=essay)
+        for type_math_id in type_math_ids:
+            essay = MathType.objects.get(id=type_math_id)
+            UserEssayConfigTypes.objects.update_or_create(users_essasy_config=updateConfig, essay_types=essay)
             
 
         updateConfig.save()

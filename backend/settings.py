@@ -121,7 +121,7 @@ DATABASES = {
         #) 
         'default': {
             'ENGINE': 'django.db.backends.mysql',
-            'NAME': 'mathia2',
+            'NAME': 'mathia_final',
             'USER': 'cristian',
             'PASSWORD': 'root',
             'HOST': 'localhost',
