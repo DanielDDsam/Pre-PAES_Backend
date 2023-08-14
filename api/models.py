@@ -128,6 +128,7 @@ class AnswerEssayUser(GenericAttributes):
     time_essay = models.TextField(**common_args)
 
 class UserEssayConfig(GenericAttributes): #25-07
+    name = models.TextField(**common_args)
     users = models.ForeignKey(Users, **common_args, on_delete=models.CASCADE, related_name='user_Essay_Config')
     essays_types = models.ManyToManyField(MathType, blank=True, through='UserEssayConfigTypes', related_name='user_Essay_Config')
     questionNumber = models.IntegerField(**common_args)
