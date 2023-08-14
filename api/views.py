@@ -79,6 +79,17 @@ class ChangePasswordView(APIView):
         return Response({'msg': 'Contraseña cambiada exitosamente'},
                         status=status.HTTP_200_OK)  # Retorna un mensaje de éxito en la respuesta
 
+class ChangeProfilePasswordView(APIView):
+    renderer_classes = [UserRenderer]  # Clase de renderizado utilizada para la vista
+    permission_classes = [IsAuthenticated]  # Clases de permisos requeridos para acceder a la vista
+
+    def patch(self, request, format=None):
+        serializer = PasswordChangeProfileSerializer(data=request.data, context={
+            'user': request.user})  # Serializador utilizado para validar y procesar los datos del formulario
+        serializer.is_valid(raise_exception=True)  # Valida los datos y lanza una excepción si no son válidos
+        return Response({'msg': 'Contraseña cambiada exitosamente'},
+                        status=status.HTTP_200_OK)  # Retorna un mensaje de éxito en la respuesta
+
 
 class UserProfileView(APIView):
     renderer_classes = [UserRenderer,]  # Clase de renderizado utilizada para la vista
@@ -108,26 +119,31 @@ class UserPasswordResetView(APIView):
 
 
 class EssayList(generics.ListAPIView):
-    queryset = Essay.objects.filter().order_by('pk')  # Consulta para obtener los ensayos ordenados por clave primaria
+    permission_classes = [IsAuthenticated]  # Clases de permisos requeridos para acceder a la vista
+    queryset = MathType.objects.filter().order_by('pk')  # Consulta para obtener los ensayos ordenados por clave primaria
     serializer_class = EssaySerializer  # Clase serializadora utilizada
 
 
 class EssayCreate(generics.CreateAPIView):
-    queryset = Essay.objects.filter().order_by('pk')  # Consulta para obtener los ensayos ordenados por clave primaria
+    permission_classes = [IsAuthenticated]  # Clases de permisos requeridos para acceder a la vista
+    queryset = MathType.objects.filter().order_by('pk')  # Consulta para obtener los ensayos ordenados por clave primaria
     serializer_class = EssaySerializer  # Clase serializadora utilizada
 
 
 class EssayRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Essay.objects.filter().order_by('pk')  # Consulta para obtener los ensayos ordenados por clave primaria
+    permission_classes = [IsAuthenticated]  # Clases de permisos requeridos para acceder a la vista
+    queryset = MathType.objects.filter().order_by('pk')  # Consulta para obtener los ensayos ordenados por clave primaria
     serializer_class = EssaySerializer  # Clase serializadora utilizada
 
 
 class QuestionCreate(generics.CreateAPIView):
+    permission_classes = [IsAuthenticated]
     queryset = Question.objects.filter().order_by('pk')  # Consulta para obtener las preguntas ordenadas por clave primaria
     serializer_class = QuestionCreateSerializer  # Clase serializadora utilizada
 
 
 class QuestionList(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
     queryset = Question.objects.all()  # Consulta para obtener todas las preguntas
     serializer_class = QuestionSerializer  # Clase serializadora utilizada
 
@@ -136,33 +152,39 @@ class QuestionList(generics.ListAPIView):
 
 
 class QuestionRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAuthenticated]
     queryset = Question.objects.filter().order_by('pk')  # Consulta para obtener las preguntas ordenadas por clave primaria
     serializer_class = QuestionSerializer  # Clase serializadora utilizada
 
 
 class AnswerRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAuthenticated]
     queryset = Answer.objects.filter().order_by('pk')  # Consulta para obtener las respuestas ordenadas por clave primaria
     serializer_class = AnswerSerializer  # Clase serializadora utilizada
 
 
 class AnswerList(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
     queryset = Answer.objects.filter().order_by('pk')  # Consulta para obtener las respuestas ordenadas por clave primaria
     serializer_class = AnswerSerializer  # Clase serializadora utilizada
 
 
 class AnswerCreate(generics.CreateAPIView):
+    permission_classes = [IsAuthenticated]
     queryset = Answer.objects.filter().order_by('pk')  # Consulta para obtener las respuestas ordenadas por clave primaria
     serializer_class = AnswerCreateSerializer  # Clase serializadora utilizada
 
 
 class QuestionsAlternativeAllView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
     serializer_class = QuestionsAlternativeAllSerializer  # Clase serializadora utilizada
     filter_backends = [DjangoFilterBackend]  # Filtros aplicados a la vista
-    filterset_fields = ['id', 'essays', 'subject']  # Campos permitidos para filtrar
+    filterset_fields = ['id', 'type_question', 'subject']  # Campos permitidos para filtrar
     queryset = Question.objects.all()  # Consulta para obtener todas las preguntas
 
 
 class AnswerEssayUserView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
     serializer_class = AnswerEssayUserSerializer  # Clase serializadora utilizada
     queryset = AnswerEssayUser.objects.filter(is_deleted=False).order_by('pk')  # Consulta para obtener las respuestas de los ensayos de usuario no eliminadas, ordenadas por clave primaria
 
@@ -179,6 +201,7 @@ class SaveAnswersView(generics.CreateAPIView):
 
 
 class UserEssayHistoryView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
     serializer_class = UserEssayHistorySerializer  # Clase serializadora utilizada
     permission_classes = (IsAuthenticated,)  # Permiso requerido para acceder a la vista
 
@@ -188,6 +211,7 @@ class UserEssayHistoryView(generics.ListAPIView):
 
 
 class CustomEssayView(generics.CreateAPIView):
+    permission_classes = [IsAuthenticated]
     queryset = CustomEssay.objects.filter(is_deleted=False)  # Consulta para obtener los ensayos personalizados que no han sido eliminados
     serializer_class = CustomEssaySerializer  # Clase serializadora utilizada
 
@@ -205,11 +229,13 @@ class CustomEssayQuestionView(generics.ListCreateAPIView):
 
 
 class CustomEssayResponseView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAuthenticated]
     queryset = CustomEssay.objects.filter(is_deleted=False)
     serializer_class = CustomEssayResponseSerializer
 
 #######################################################################################
 class questionAnswers(generics.RetrieveAPIView):
+    permission_classes = [IsAuthenticated]
     serializer_class = QuestionAnswerSerializer
     filter_backends = [DjangoFilterBackend]
     
@@ -219,8 +245,10 @@ class questionAnswers(generics.RetrieveAPIView):
         return queryset
 
 class oneQuestion(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
     serializer_class = QuestionOneSerializer
     filter_backends = [DjangoFilterBackend]
+    permission_classes = [IsAuthenticated]  # Clases de permisos requeridos para acceder a la vista
 
     def get_queryset(self):
         #data = self.request.data.get('ids_a_evitar', [])
@@ -249,23 +277,24 @@ class oneQuestion(generics.ListAPIView):
         return Response(serializer.data)
 
 class oneQuestionRules(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
     serializer_class = QuestionOneSerializer
     filter_backends = [DjangoFilterBackend]
 
     def get_queryset(self):
 
         user = self.request.user#obtenemos el usuario actual 
-        UserQuestionState_ids = UserQuestionState.objects.filter(users_id = user.id).values_list('id', flat=True) #agregar el usuario a que hace referencia 
-        pregunta = self.obtener_pregunta(user)
-
+        UserQuestionState_ids = UserQuestionState.objects.filter(users_id = user.id).values_list('id', flat=True) #obtenemos los ids de las preguntas contestadas 
+        pregunta = self.obtener_pregunta(user)#pasamos el usuario para obtener una pregunta
+        
         if pregunta == 'nueva':
-            if UserQuestionState_ids:
-                queryset = Question.objects.all().exclude(id__in=UserQuestionState_ids).order_by('?') #agregar el else
+            if UserQuestionState_ids:#vemos si ya contesto alguna pregunta
+                queryset = Question.objects.all().exclude(id__in=UserQuestionState_ids).order_by('?') #sacamos una pregunta que no este entre las ya contestadas
                 #print(queryset.first())
             else:
                 queryset = Question.objects.all().order_by('?')
         else:
-            queryset = Question.objects.filter(id=pregunta.question_id) 
+            queryset = Question.objects.filter(id=pregunta.question_id) #si la pregunta no es nueva, es reforzar o correcta la obtenemos 
         return queryset
 
     def list(self, request):
@@ -278,23 +307,109 @@ class oneQuestionRules(generics.ListAPIView):
     
     def obtener_pregunta(self, user):
     # Contadores de preguntas correctas y reforzar
-        create_data = UserQuestionState.objects.filter(users_id = user.id).order_by('created')
-        update_data = UserQuestionState.objects.filter(users_id = user.id).order_by('updated')
-        allquestions = UserQuestionState.objects.filter(users_id = user.id)
+        create_data = UserQuestionState.objects.filter(users_id = user.id).order_by('created') #obtemos las preguntas ordenadas por orden de creación
+        update_data = UserQuestionState.objects.filter(users_id = user.id).order_by('updated') #obtemos las preguntas ordenadas por orden de modificacion 
+        allquestions = UserQuestionState.objects.filter(users_id = user.id) #las obtenemos todas
  
-        todos_los_elementos = list(create_data)[-2:] + list(update_data)[-2:]
-        todos_los_elementos.sort(key=lambda x: x.created if x.created else x.updated, reverse=True)
+        todos_los_elementos = list(create_data)[-2:] + list(update_data)[-2:] #obtenemos las 2 ultimas creadas y modificadoas
+        todos_los_elementos.sort(key=lambda x: x.created if x.created else x.updated, reverse=True) #se ordena por la fecha mas actual primero para ver las utimas 2 contestadas
         questionState = []
         questionState.extend(todos_los_elementos)
         
-        for i in range(len(todos_los_elementos)):
+        for i in range(len(todos_los_elementos)): #eliminamos las preguntas repetidas
             
             if(i == 0):
-                if (todos_los_elementos[i] == todos_los_elementos[i+1]):
+                if (todos_los_elementos[i] == todos_los_elementos[i+1]): #si la primera pregunta tambien es la segunda entonces eliminamos la segunda
                     del questionState[i+1]
             else:
-                if (todos_los_elementos[0] == todos_los_elementos[i]):
+                if (todos_los_elementos[0] == todos_los_elementos[i]): 
                     del questionState[i]
+        #en resumen dejamos las 2 preguntas contestadas recientemente, verificando que no sean las mismas
+
+        print(questionState)
+
+        preguntas_correctas = sum(1 for pregunta in allquestions if pregunta.state == 'Correcta')
+        preguntas_erroneas = sum(1 for pregunta in allquestions if pregunta.state == 'Reforzar')
+        print("Preguntas correctas:", preguntas_correctas)
+        print("Preguntas para reforzar:", preguntas_erroneas)
+
+        # Verificar si se han respondido al menos 3 preguntas erróneas y 3 preguntas para reforzar
+        if preguntas_correctas + preguntas_erroneas >= 6:
+            # Obtener las últimas 2 respuestas del usuario
+
+            ultimas_respuestas = [pregunta.state for pregunta in questionState[-2:]]
+            # Probabilidad de cambiar una pregunta "correcta" a "reforzar" o "nueva"
+            if ultimas_respuestas == ['Correcta', 'Correcta'] and random.random() < 0.7:
+                # Cambiar una pregunta "correcta" a "reforzar"
+                preguntas_erroneas_list = [pregunta for pregunta in allquestions if pregunta.state == 'Reforzar']
+                pregunta_seleccionada = random.choice(preguntas_erroneas_list)
+                pass
+            elif ultimas_respuestas == ['Reforzar', 'Reforzar'] and random.random() < 0.7:
+                # Cambiar una pregunta "errónea" a "correcta"
+                preguntas_correctas_list = [pregunta for pregunta in allquestions if pregunta.state == 'Correcta']
+                pregunta_seleccionada = random.choice(preguntas_correctas_list)
+                pass
+            else:
+                # Indicar que la pregunta debe ser nueva
+                return 'nueva'
+        else:
+            # Indicar que la pregunta debe ser nueva
+            return 'nueva'
+        #print(pregunta_seleccionada.id)
+        return pregunta_seleccionada
+
+class oneQuestionRulesPrePaes(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = QuestionOneSerializer
+    filter_backends = [DjangoFilterBackend]
+
+    def get_queryset(self):
+
+        user = self.request.user#obtenemos el usuario actual 
+        UserQuestionState_ids = UserQuestionState.objects.filter(users_id = user.id).values_list('id', flat=True) #obtenemos los ids de las preguntas contestadas 
+        pregunta = self.obtener_pregunta(user)#pasamos el usuario para obtener una pregunta
+        
+        if pregunta == 'nueva':
+            if UserQuestionState_ids:#vemos si ya contesto alguna pregunta
+                queryset = Question.objects.all().exclude(id__in=UserQuestionState_ids).order_by('?') #sacamos una pregunta que no este entre las ya contestadas
+                #print(queryset.first())
+            else:
+                queryset = Question.objects.all().order_by('?')
+        else:
+            queryset = Question.objects.filter(id=pregunta.question_id) #si la pregunta no es nueva, es reforzar o correcta la obtenemos 
+        return queryset
+
+    def list(self, request):
+        # Note the use of `get_queryset()` instead of `self.queryset`
+        print('queryset')
+        queryset = self.get_queryset().first()
+        serializer = QuestionOneSerializer(queryset) 
+        print(queryset)
+        return Response(serializer.data)
+    
+    def save_obtain_question(self,request):
+        pass
+    
+    def obtener_pregunta(self, user):
+    # Contadores de preguntas correctas y reforzar
+        create_data = UserQuestionState.objects.filter(users_id = user.id).order_by('created') #obtemos las preguntas ordenadas por orden de creación
+        update_data = UserQuestionState.objects.filter(users_id = user.id).order_by('updated') #obtemos las preguntas ordenadas por orden de modificacion 
+        allquestions = UserQuestionState.objects.filter(users_id = user.id) #las obtenemos todas
+ 
+        todos_los_elementos = list(create_data)[-2:] + list(update_data)[-2:] #obtenemos las 2 ultimas creadas y modificadoas
+        todos_los_elementos.sort(key=lambda x: x.created if x.created else x.updated, reverse=True) #se ordena por la fecha mas actual primero para ver las utimas 2 contestadas
+        questionState = []
+        questionState.extend(todos_los_elementos)
+        
+        for i in range(len(todos_los_elementos)): #eliminamos las preguntas repetidas
+            
+            if(i == 0):
+                if (todos_los_elementos[i] == todos_los_elementos[i+1]): #si la primera pregunta tambien es la segunda entonces eliminamos la segunda
+                    del questionState[i+1]
+            else:
+                if (todos_los_elementos[0] == todos_los_elementos[i]): 
+                    del questionState[i]
+        #en resumen dejamos las 2 preguntas contestadas recientemente, verificando que no sean las mismas
 
         print(questionState)
 
@@ -329,6 +444,7 @@ class oneQuestionRules(generics.ListAPIView):
         return pregunta_seleccionada
 
 class SaveOneAnswer(generics.CreateAPIView):
+    permission_classes = [IsAuthenticated]
     #permission_classes = (IsAuthenticated,)  # Permiso requerido para acceder a la vista
     serializer_class = SaveAnswerSerializer  # Clase serializadora utilizada
 
@@ -344,7 +460,7 @@ class SaveOneAnswer(generics.CreateAPIView):
 
 
 class SaveUserQuestion(generics.CreateAPIView):
-
+    permission_classes = [IsAuthenticated]
     serializer_class = SaveUserQuestionState
 
     def create(self, request, *args, **kwargs): 
@@ -374,14 +490,17 @@ class SaveUserQuestion(generics.CreateAPIView):
 
 #25-07 para guardar la configuración
 class UserEssayConfigCreate(generics.CreateAPIView):
+    permission_classes = [IsAuthenticated]
     queryset = UserEssayConfig.objects.all()
     serializer_class = UserEssayConfigSerializer
 
 class UserEssayConfigRetrieveUpdate(generics.RetrieveUpdateAPIView):
+    permission_classes = [IsAuthenticated]
     queryset = UserEssayConfig.objects.filter().order_by('pk')  # Obtiene todos los usuarios ordenados por su clave primaria
     serializer_class = UserEssayConfigSerializer
 
 class UserEssayConfigList(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
     #queryset = UserEssayConfig.objects.prefetch_related('user_Essay_Config_types') este prefetch realiza lo mismo que lo definido en el queryset
     serializer_class = UserEssayConfigSerializer
     #LIST SOLO LOS DE UN USUARIO
@@ -393,7 +512,9 @@ class UserEssayConfigList(generics.ListAPIView):
 #27-07
 
 class QuestionListType(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
     serializer_class = QuestionSerializer  # Clase serializadora utilizada
+    
     def get_queryset(self): 
         tiposDePreguntas = self.request.data.get('tiposDePreguntas', '') #
         numeroDePreguntas = self.request.data.get('numeroDePreguntas', '') #

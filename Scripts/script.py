@@ -1819,14 +1819,14 @@ def poblarBd(data):
         print(essay_data)
         print('------------------------------------------------------------------')
         question = essay_data.pop('questions')
-        essay_object = Essay.objects.create(**essay_data)
+        essay_object = MathType.objects.create(**essay_data)
         print(essay_object)
         print('------------------------------------------------------------------')
         for question_data in question:
             print(question_data)
             print('------------------------------------------------------------------')
             answers = question_data.pop('answer')
-            question_object = Question.objects.create(**question_data, essays=essay_object)
+            question_object = Question.objects.create(**question_data, type_question=essay_object)
             print(question_object)
             print('------------------------------------------------------------------')
             for answer_data in answers:

@@ -36,6 +36,7 @@ urlpatterns = [
     re_path(r'^questions_alternativeSpecific/(?P<pk>[0-9]+)/$', views.questionAnswers.as_view()),#endpoint para consultar por un ensayo en especifico con todas sus  preguntas y alternativas
     re_path(r'^question_oneQuestion/$', views.oneQuestion.as_view()),#endpoint para consultar una sola pregunta
     re_path(r'^question_oneQuestionRules/$', views.oneQuestionRules.as_view()),#endpoint para consultar una sola pregunta en base a las reglas establecidas
+    re_path(r'^question_oneQuestionRules_prePaes/$', views.oneQuestionRules.as_view()),#endpoint para consultar una sola pregunta en base a las reglas establecidas
 
     re_path(r'^questions_alternative/$', views.QuestionsAlternativeAllView.as_view()),#Endpoint para consultar todas las preguntas y alternativas de un ensayo específico
     re_path(r'^score_user/all/$', views.AnswerEssayUserView.as_view()),#Endpoint para obtener el puntaje del usuario
@@ -54,6 +55,7 @@ urlpatterns += [
     re_path(r'^api/send_reset_password_email/$', views.SendPasswordResetEmailView.as_view(), name='send_reset_password_email'),#Endpoint para pedir un cambio de contraseña via mail
     path('api/reset_password/<uid>/<token>/', views.UserPasswordResetView.as_view(), name='reset_password'),#Endpoint para cambiar la contraseña si se tiene uid y el token asignado
     re_path(r'^api/change_password/$', views.ChangePasswordView.as_view(), name='change_password'),#Endpoint para cambiar la contraseña
+    re_path(r'^api/change_password_profile/$', views.ChangeProfilePasswordView.as_view(), name='change_password_profile'),#Endpoint para cambiar la contraseña en la vista de perfil
     re_path(r'^api/profile/$', views.UserProfileView.as_view(), name='profile'),#Endpoint para consultar el perfil del usuario
 
 ]

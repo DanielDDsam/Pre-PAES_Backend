@@ -68,7 +68,7 @@ class Users(AbstractBaseUser,GenericAttributes):
 
 
 # Clase del modelo Essay
-class Essay(GenericAttributes):
+class MathType(GenericAttributes):
     name = models.TextField(**common_args)
     type = models.TextField(**common_args)
 
@@ -77,14 +77,15 @@ class Essay(GenericAttributes):
 class CustomEssay(GenericAttributes):
     is_custom = models.BooleanField(default=False)
     name = models.TextField(**common_args)
-    essays = models.ManyToManyField(Essay, blank=True, through='EssayAnswer', related_name='custom_essay')
+    type_essay = models.ManyToManyField(MathType, blank=True, through='TypesEssayCustom', related_name='custom_type_essay')
     user = models.ForeignKey(Users, **common_args, on_delete=models.CASCADE, related_name='essay_user')
     current_questions = models.IntegerField(**common_args)
+    prePaes = models.BooleanField(default=False)#10-08-2023
 
 
 # Clase del modelo EssayAnswer
-class EssayAnswer(GenericAttributes):
-    essay = models.ForeignKey(Essay, **common_args,on_delete=models.CASCADE, related_name='essay_answer')
+class TypesEssayCustom(GenericAttributes):
+    type_essays = models.ForeignKey(MathType, **common_args,on_delete=models.CASCADE, related_name='type_essay_custom')
     custom_essay = models.ForeignKey(CustomEssay, **common_args,on_delete=models.CASCADE, related_name='essay_custom')
 
 
@@ -93,7 +94,7 @@ class Question(GenericAttributes):
     question = models.TextField(**common_args)
     subject = models.TextField(**common_args)
     link_resolution = models.URLField(**common_args)
-    essays = models.ForeignKey(Essay, **common_args,on_delete=models.CASCADE, related_name='question')
+    type_question = models.ForeignKey(MathType, **common_args,on_delete=models.CASCADE, related_name='question_type')
     users = models.ManyToManyField(Users, blank=True, through='UserQuestionState', related_name='question_user') #18-07
 
 # Clase del modelo UserQuestionState
@@ -126,19 +127,13 @@ class AnswerEssayUser(GenericAttributes):
     score = models.IntegerField(**common_args)
     time_essay = models.TextField(**common_args)
 
-class UserQuestions(GenericAttributes):
-    question = models.OneToOneField(Question, related_name='UserQuestion', on_delete=models.CASCADE)
-    users = models.ForeignKey(Users, **common_args, on_delete=models.CASCADE, related_name='question_user_difficult')
-    state = models.CharField(**common_args, max_length=255)
-    difdicult = models.CharField(**common_args, max_length=255)
-
 class UserEssayConfig(GenericAttributes): #25-07
     users = models.ForeignKey(Users, **common_args, on_delete=models.CASCADE, related_name='user_Essay_Config')
-    essays = models.ManyToManyField(Essay, blank=True, through='UserEssayConfigTypes', related_name='user_Essay_Config')
+    essays_types = models.ManyToManyField(MathType, blank=True, through='UserEssayConfigTypes', related_name='user_Essay_Config')
     questionNumber = models.IntegerField(**common_args)
 
 class UserEssayConfigTypes(GenericAttributes): #25-07
     users_essasy_config = models.ForeignKey(UserEssayConfig, **common_args, on_delete=models.CASCADE, related_name='user_Essay_Config_types')
-    essay = models.ForeignKey(Essay, **common_args, on_delete=models.CASCADE, related_name='user_Essay_Config_types')
+    essay_types = models.ForeignKey(MathType, **common_args, on_delete=models.CASCADE, related_name='user_Essay_Config_types')
 
     
