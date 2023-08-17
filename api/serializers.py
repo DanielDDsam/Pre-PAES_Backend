@@ -623,7 +623,7 @@ class UserEssayConfigSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
         number_user_config = UserEssayConfig.objects.filter(users=user).count()
 
-        if number_user_config >= 4:
+        if number_user_config > 4:
              raise serializers.ValidationError({'message': 'Actualmente, solo puedes almacenar hasta 4 configuraciones.'})
         
         return attrs
