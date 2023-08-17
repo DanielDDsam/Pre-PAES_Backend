@@ -22,12 +22,12 @@ urlpatterns = [
 
     re_path(r'^essaysConfig/create/$', views.UserEssayConfigCreate.as_view()),#Endpoint para guardar la configuración del esayo para usuario
     re_path(r'^essaysConfig/list/$', views.UserEssayConfigList.as_view()),#Endpoint para listar las configuraciones de los esayos para usuario
-    re_path(r'^essaysConfig/update/(?P<pk>[0-9]+)/$', views.UserEssayConfigRetrieveUpdate.as_view()),#Endpoint para obtener una sola configuracipon y actualizar unop
+    re_path(r'^essaysConfig/retrieve/(?P<pk>[0-9]+)/$', views.UserEssayConfigRetrieveUpdate.as_view()),#Endpoint para obtener una sola configuracipon y actualizar unop o eliminarlo
 
     re_path(r'^questions/list/all/$', views.QuestionList.as_view()),#Endpoint para consultar todas las preguntas
     re_path(r'^questions/create/$', views.QuestionCreate.as_view()),#Endpoint para crear una pregunta
     re_path(r'^questions/(?P<pk>[0-9]+)/$', views.QuestionRetrieveUpdateDestroy.as_view()),#Endpoint para consultar, eliminar, actualizar una pregunta específica
-    re_path(r'^questions_types/$', views.QuestionListType.as_view()),#Endpoint para consultar preguntas en base a tipos
+    re_path(r'^questions_types/(?P<tiposDePreguntas>[^/]+)/(?P<numeroDePreguntas>\d+)/$', views.QuestionListType.as_view()),#Endpoint para consultar preguntas en base a tipos
 
     re_path(r'^answers/list/all/$', views.AnswerList.as_view()),#Endpoint para consultar todas las respuestas
     re_path(r'^answers/create/$', views.AnswerCreate.as_view()),#Endpoint para crear una respuesta
@@ -37,8 +37,8 @@ urlpatterns = [
     re_path(r'^question_oneQuestion/$', views.oneQuestion.as_view()),#endpoint para consultar una sola pregunta
     re_path(r'^question_oneQuestionRules/$', views.oneQuestionRules.as_view()),#endpoint para consultar una sola pregunta en base a las reglas establecidas
     re_path(r'^question_oneQuestionRules_prePaes/$', views.oneQuestionRules.as_view()),#endpoint para consultar una sola pregunta en base a las reglas establecidas
-
     re_path(r'^questions_alternative/$', views.QuestionsAlternativeAllView.as_view()),#Endpoint para consultar todas las preguntas y alternativas de un ensayo específico
+
     re_path(r'^score_user/all/$', views.AnswerEssayUserView.as_view()),#Endpoint para obtener el puntaje del usuario
     re_path(r'^submit_answers/$', views.SaveAnswersView.as_view()),#Endpoint para guardar las respuestas del usuario
 

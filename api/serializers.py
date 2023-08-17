@@ -226,7 +226,7 @@ class AnswerEssayUserSerializer(serializers.ModelSerializer):
         fields = ['essays', 'score', 'answers']
 
 
-# Serializador para mostrar las respuestas y sus preguntas, junto con la ID del ensayo
+# Serializador para mostrar las respuestas y sus preguntas, junto con la ID del tipo de ensayo
 class QuestionsAlternativeAllSerializer(QuestionSerializer):
     answer = AnswerSerializer(many=True, read_only=True)
 
@@ -600,18 +600,33 @@ class SaveUserQuestionState(serializers.Serializer): #18-07
 #25-07
 
 class UserEssayConfigTypesSerializer(serializers.ModelSerializer):
+    math_type_id = serializers.IntegerField(source='essay_types.id')#el nombre que tiene el campo en el modelo y que se relaciona con la tabla mathType
+    math_type_type = serializers.CharField(source='essay_types.type')
+
     class Meta:
         model = UserEssayConfigTypes
-        fields = ['id', 'users_essasy_config_id', 'essay_types_id']
+        fields = ['math_type_id','math_type_type']
 
 class UserEssayConfigSerializer(serializers.ModelSerializer):
-    type_math_ids = serializers.ListField(write_only=True)  # Campo de lista solo para escritura
+    #type_math_ids = serializers.ListField(write_only=True)  # Campo de lista solo para escritura
+    user_Essay_Config_types_all  = UserEssayConfigTypesSerializer(many=True, read_only=True, source='user_Essay_Config_types')
+    #debe llamare igual que el related-name de la realcion 
     #essays = UserEssayConfigTypesSerializer(many = True, read_only = True) #indicamos el mucho de la relación, en este caso el tipo de ensayo
     
     class Meta:
         model = UserEssayConfig
         #fields = ['users', 'essay_ids', 'questionNumber']
-        exclude = [*generic_fields]
+        exclude = [*generic_fields,'users','essays_types']
+    
+    def validate(self, attrs):
+        
+        user = self.context['request'].user
+        number_user_config = UserEssayConfig.objects.filter(users=user).count()
+
+        if number_user_config >= 4:
+             raise serializers.ValidationError({'message': 'Actualmente, solo puedes almacenar hasta 4 configuraciones.'})
+        
+        return attrs
     
     def create(self, validated_data):
         print(validated_data)
