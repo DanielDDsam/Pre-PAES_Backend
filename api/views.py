@@ -448,7 +448,7 @@ class SaveOneAnswer(generics.CreateAPIView):
     #permission_classes = (IsAuthenticated,)  # Permiso requerido para acceder a la vista
     serializer_class = SaveAnswerSerializer  # Clase serializadora utilizada
 
-    def post(self, request, *args, **kwargs): 
+    def create(self, request, *args, **kwargs): 
         answer_serializer = self.serializer_class(data = request.data, context={'request': request})
         #print(answer_serializer)
         if answer_serializer.is_valid():
@@ -494,10 +494,20 @@ class UserEssayConfigCreate(generics.CreateAPIView):
     queryset = UserEssayConfig.objects.all()
     serializer_class = UserEssayConfigSerializer
 
-class UserEssayConfigRetrieveUpdate(generics.RetrieveUpdateAPIView):
+    def create(self, request, *args, **kwargs):
+        config_Create = self.serializer_class(data = request.data, context={'request': request})
+        if config_Create.is_valid():
+            config_Create.save()
+
+            return Response({'message':'CREATED'}, status=status.HTTP_201_CREATED)
+        else:
+            config_Create.is_valid(raise_exception=True)
+
+class UserEssayConfigRetrieveUpdate(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated]
     queryset = UserEssayConfig.objects.filter().order_by('pk')  # Obtiene todos los usuarios ordenados por su clave primaria
     serializer_class = UserEssayConfigSerializer
+
 
 class UserEssayConfigList(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
@@ -513,21 +523,25 @@ class UserEssayConfigList(generics.ListAPIView):
 
 class QuestionListType(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
-    serializer_class = QuestionSerializer  # Clase serializadora utilizada
+    serializer_class = QuestionOneSerializer  # Clase serializadora utilizada, con esta tambien entrega las respuestas
     
     def get_queryset(self): 
-        tiposDePreguntas = self.request.data.get('tiposDePreguntas', '') #
-        numeroDePreguntas = self.request.data.get('numeroDePreguntas', '') #
+
+        tiposDePreguntas = self.kwargs['tiposDePreguntas'] #
+        numeroDePreguntas = self.kwargs['numeroDePreguntas'] #
         UserQuestionState_ids = UserQuestionState.objects.filter(users_id = self.request.user.id).values_list('id', flat=True)
         cantidadPorTipo = 0
         resto = 0
         preguntas = []
         cantidadPorPreguntas = [] 
+        print(str(tiposDePreguntas)+'hola')
+        print('hola')
         if tiposDePreguntas is not None:
 
             
             if type(tiposDePreguntas) is not list:
-                queryset = Question.objects.filter(essays_id=tiposDePreguntas).exclude(id__in=UserQuestionState_ids).order_by('?')[:numeroDePreguntas]
+                print(tiposDePreguntas)
+                #queryset = Question.objects.filter(type_question_id=tiposDePreguntas).exclude(id__in=UserQuestionState_ids).order_by('?')[:numeroDePreguntas]
             else:
                 #identificar cuanto es para cada pregunta si hay mas de una
                 cantidadPorTipo = math.floor(numeroDePreguntas/len(tiposDePreguntas))
@@ -543,14 +557,14 @@ class QuestionListType(generics.ListAPIView):
                         cantidadPorPreguntas[random.randint(0, len(tiposDePreguntas)-1)] +=1
                     
                     for i in range(len(tiposDePreguntas)):
-                        queryset = Question.objects.filter(essays_id=tiposDePreguntas[i]).exclude(id__in=UserQuestionState_ids).order_by('?')[:cantidadPorPreguntas[i]]
+                        queryset = Question.objects.filter(type_question_id=tiposDePreguntas[i]).exclude(id__in=UserQuestionState_ids).order_by('?')[:cantidadPorPreguntas[i]]
                         preguntas.extend(queryset)
                     
                     return preguntas
                 else:
-                    queryset = Question.objects.filter(essays_id__in=tiposDePreguntas).exclude(id__in=UserQuestionState_ids).order_by('?')[:numeroDePreguntas]#si es exacto el numero de pregunta es igual por cada uno
+                    queryset = Question.objects.filter(type_question_id__in=tiposDePreguntas).exclude(id__in=UserQuestionState_ids).order_by('?')[:numeroDePreguntas]#si es exacto el numero de pregunta es igual por cada uno
         else:
             raise serializers.ValidationError("Se debe proporcionar los tipos de preguntas")
     
-        
-        return queryset
+        queryset = Question.objects.order_by('?')[:12]
+        return  queryset
