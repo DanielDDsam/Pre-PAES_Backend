@@ -672,7 +672,7 @@ class UserEssayConfigSerializer(serializers.ModelSerializer):
         updateConfig.save()
         return updateConfig
 
-class UserBestEssayScore():
+class UserBestEssayScore(serializers.ModelSerializer):
 
     date = serializers.SerializerMethodField()  # Campo para obtener la fecha de creación del ensayo
 
@@ -704,13 +704,14 @@ class UserBestEssayScore():
         
         data = super().to_representation(instance) #obtenemos la data cuando se llamara al serializador del llamado al serializador
         data['time_essay'] = self.get_time(instance)  # Incluir el tiempo empleado en el ensayo en la representación
-        data['puntaje'] = self.get_score(instance)  # Incluir el puntaje obtenido en la representación
-
+        data['puntaje'] = self.get_best_score(instance)  # Incluir el puntaje obtenido en la representación
+        
         # Verificar si hay registros en AnswerEssayUser para el CustomEssay actual
         has_answer_essay_user = AnswerEssayUser.objects.filter(essays=instance).exists()
         if not has_answer_essay_user:
-            # No mostrar el CustomEssay si no hay registros en AnswerEssayUser
-            return None
+            
+            #se retorna [ ] ya que None deja un error al intentar evaluarlo mediante if en la view
+            return []
 
-        print(data['puntaje'])
+        
         return data

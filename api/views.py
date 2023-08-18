@@ -245,7 +245,6 @@ class questionAnswers(generics.RetrieveAPIView):
         return queryset
 
 class oneQuestion(generics.ListAPIView):
-    permission_classes = [IsAuthenticated]
     serializer_class = QuestionOneSerializer
     filter_backends = [DjangoFilterBackend]
     permission_classes = [IsAuthenticated]  # Clases de permisos requeridos para acceder a la vista
@@ -580,7 +579,7 @@ class falseCharge(generics.ListAPIView):
     def get(self,request): 
         return Response({'message':'Hola'}, status.HTTP_200_OK)
 
-class bestScore(generics.RetrieveAPIView):
+class bestAverageScore(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = UserBestEssayScore  # Clase serializadora utilizada
     permission_classes = (IsAuthenticated,)  # Permiso requerido para acceder a la vista
@@ -589,7 +588,77 @@ class bestScore(generics.RetrieveAPIView):
         user_pk = self.kwargs['pk']  # Obtener el ID del usuario de los parámetros de la URL
         return CustomEssay.objects.filter(user_id=user_pk)  # Devolver los ensayos personalizados del usuario
     
-    def list(self, request):
-        print('listado')
+    def list(self, request, pk):
         product_serializer = self.get_serializer(self.get_queryset(), many = True)
-        return Response(product_serializer.data, status=status.HTTP_200_OK)
+        bestScore = self.hig_score(product_serializer.data)
+        average = self.average_score(product_serializer.data)
+        print(bestScore)
+        print(average)
+        return Response({'bestScore':bestScore,'average':average}, status=status.HTTP_200_OK)
+    
+    
+    def hig_score(self, data):
+        score = 0
+        dataScore = ''
+        for i in range(len(data)):
+            if data[i] != []: #evitamos que tome ensayos incompletos
+                if(score < data[i]['puntaje']):
+                    score = data[i]['puntaje']
+                    dataScore = data[i]     
+        return dataScore
+    
+    def average_score(self, data):
+        average = 0
+        validEssayCount = 0
+        for i in range(len(data)):
+            if data[i] != []: #evitamos que tome ensayos incompletos
+                average += int(data[i]['puntaje'])
+                validEssayCount+=1
+            
+        average = average/validEssayCount        
+        return average
+    
+class CustomEssayMostRecentView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserBestEssayScore  # Clase serializadora utilizada
+    
+    def get_queryset(self, pk=None):
+        user_pk = self.kwargs['pk']  # Obtener el ID del usuario de los parámetros de la URL
+        queryset = CustomEssay.objects.filter(user_id=user_pk).order_by('-created')
+        return queryset # Devolver los ensayos personalizados del usuario
+    
+    def list(self, request, pk):
+        queryset = self.get_queryset(pk)
+        for i in range(len(queryset)):
+            serializer = UserBestEssayScore(queryset[i])
+            if len(serializer.data) != 0: #si el largo es 0 quiere decir que es un ensayo sin respuestas  
+        
+                return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response({'message':'No hay ensayos realizados por el usuario'}, status=status.HTTP_204_NO_CONTENT)
+
+class CustomEssayMostRecentResumeView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserBestEssayScore  # Clase serializadora utilizada
+    
+    def get_queryset(self, pk=None):
+        user_pk = self.kwargs['pk']  # Obtener el ID del usuario de los parámetros de la URL
+        queryset = CustomEssay.objects.filter(user_id=user_pk).order_by('created')
+        return queryset # Devolver los ensayos personalizados del usuario
+    
+    def list(self, request, pk):
+        queryset = self.get_queryset(pk)
+        data = []
+        count = 0
+        for i in range(len(queryset)):
+            serializer = UserBestEssayScore(queryset[i])
+            if len(serializer.data) != 0 & count <= 5: #si el largo es 0 quiere decir que es un ensayo sin respuestas  
+                data.append(serializer.data)
+                count+=1
+            
+            if count == 5:
+                return Response(data, status=status.HTTP_200_OK)
+        
+        if count == 0:
+            return Response({'message':'No hay ensayos realizados por el usuario'}, status=status.HTTP_204_NO_CONTENT)
+        return Response(data, status=status.HTTP_200_OK)
+    

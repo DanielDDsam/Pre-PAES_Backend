@@ -50,7 +50,9 @@ urlpatterns = [
     re_path(r'^custom_essays/$', views.CustomEssayView.as_view()),#Endpoint para consultar y crear ensayos personalizados
     re_path(r'^custom_essay_questions/$', views.CustomEssayQuestionView.as_view()),#Endpoint para asociar preguntas a un ensayo personalizado
 
-    re_path(r'^best_score/$', views.falseCharge.as_view()),#Endpoint para peticion falsa
+    re_path(r'^best_average_score/(?P<pk>[0-9]+)/$', views.bestAverageScore.as_view()),#Endpoint para consultar el puntaje maximo y el promedio de puntajes de un usaurio
+    re_path(r'^recent_essay/(?P<pk>[0-9]+)/$', views.CustomEssayMostRecentView.as_view()),#Endpoint para consultar el puntaje maximo y el promedio de puntajes de un usaurio
+    re_path(r'^recent_essay_resume/(?P<pk>[0-9]+)/$', views.CustomEssayMostRecentResumeView.as_view()),#Endpoint para consultar el puntaje maximo y el promedio de puntajes de un usaurio
     re_path(r'^home/$', views.falseCharge.as_view()),#Endpoint para peticion falsa
 ]
 
