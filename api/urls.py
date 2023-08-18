@@ -49,6 +49,9 @@ urlpatterns = [
     re_path(r'^custom_essay_view/(?P<pk>[0-9]+)/$', views.CustomEssayResponseView.as_view()),#Endpoint para consultar un ensayo mediante su id entregal o que se respondio
     re_path(r'^custom_essays/$', views.CustomEssayView.as_view()),#Endpoint para consultar y crear ensayos personalizados
     re_path(r'^custom_essay_questions/$', views.CustomEssayQuestionView.as_view()),#Endpoint para asociar preguntas a un ensayo personalizado
+
+    re_path(r'^best_score/$', views.falseCharge.as_view()),#Endpoint para peticion falsa
+    re_path(r'^home/$', views.falseCharge.as_view()),#Endpoint para peticion falsa
 ]
 
 urlpatterns += [

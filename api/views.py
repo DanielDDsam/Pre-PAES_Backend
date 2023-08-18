@@ -387,7 +387,7 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
         print(queryset)
         return Response(serializer.data)
     
-    def save_obtain_question(self,request):
+    def save_obtain_question(self,request):#aqui cristian soy tu yo del pasado, recuerda que aqui va pregunta obtenida, ya que en el metodo pre-paes se puede salir sin problemas, por lo tanto debemos guardarla pasa así saber de donde retornarla 17_08
         pass
     
     def obtener_pregunta(self, user):
@@ -512,7 +512,7 @@ class UserEssayConfigRetrieveUpdate(generics.RetrieveUpdateDestroyAPIView):
 class UserEssayConfigList(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     #queryset = UserEssayConfig.objects.prefetch_related('user_Essay_Config_types') este prefetch realiza lo mismo que lo definido en el queryset
-    serializer_class = UserEssayConfigSerializer
+    serializer_class = UserEssayConfigListSerializer
     #LIST SOLO LOS DE UN USUARIO
     def get_queryset(self): 
         user = self.request.user
@@ -528,43 +528,68 @@ class QuestionListType(generics.ListAPIView):
     def get_queryset(self): 
 
         tiposDePreguntas = self.kwargs['tiposDePreguntas'] #
-        numeroDePreguntas = self.kwargs['numeroDePreguntas'] #
-        UserQuestionState_ids = UserQuestionState.objects.filter(users_id = self.request.user.id).values_list('id', flat=True)
+        tiposDePreguntas = tiposDePreguntas.replace("[", "")
+        tiposDePreguntas = tiposDePreguntas.replace("]", "")
+        tipos_de_preguntas_list = tiposDePreguntas.split(',')
+        tipos_de_preguntas = list(tipos_de_preguntas_list)
+
+        numeroDePreguntas = int(self.kwargs['numeroDePreguntas']) #
+        
         cantidadPorTipo = 0
         resto = 0
         preguntas = []
         cantidadPorPreguntas = [] 
-        print(str(tiposDePreguntas)+'hola')
-        print('hola')
-        if tiposDePreguntas is not None:
+        
+        if tipos_de_preguntas is not None:
 
-            
-            if type(tiposDePreguntas) is not list:
-                print(tiposDePreguntas)
-                #queryset = Question.objects.filter(type_question_id=tiposDePreguntas).exclude(id__in=UserQuestionState_ids).order_by('?')[:numeroDePreguntas]
+            if len(tipos_de_preguntas) == 0:
+                queryset = Question.objects.filter(type_question_id=tipos_de_preguntas).order_by('?')[:numeroDePreguntas]
             else:
                 #identificar cuanto es para cada pregunta si hay mas de una
-                cantidadPorTipo = math.floor(numeroDePreguntas/len(tiposDePreguntas))
+                cantidadPorTipo = math.floor(numeroDePreguntas/len(tipos_de_preguntas))
 
-                for i in range(len(tiposDePreguntas)): #alacenamos la cantidad por pregunta
+                for i in range(len(tipos_de_preguntas)): #alacenamos la cantidad por pregunta
                         cantidadPorPreguntas.append(cantidadPorTipo)
 
                 #identificar cual de todos los tipos tendra más si la suma no es exacta
-                if cantidadPorTipo*len(tiposDePreguntas) != numeroDePreguntas:
-                    resto = numeroDePreguntas - cantidadPorTipo*len(tiposDePreguntas)#alacenamos la diferencia para repartirlas entre las preguntas
+                if cantidadPorTipo*len(tipos_de_preguntas) != numeroDePreguntas:
+                    resto = numeroDePreguntas - cantidadPorTipo*len(tipos_de_preguntas)#alacenamos la diferencia para repartirlas entre las preguntas
                     
                     for i in range(resto):#Agregamos de manera aleatoria la diferencia a cada una de las preguntas
-                        cantidadPorPreguntas[random.randint(0, len(tiposDePreguntas)-1)] +=1
+                        cantidadPorPreguntas[random.randint(0, len(tipos_de_preguntas)-1)] +=1
                     
-                    for i in range(len(tiposDePreguntas)):
-                        queryset = Question.objects.filter(type_question_id=tiposDePreguntas[i]).exclude(id__in=UserQuestionState_ids).order_by('?')[:cantidadPorPreguntas[i]]
+                    for i in range(len(tipos_de_preguntas)):
+                        queryset = Question.objects.filter(type_question_id=tipos_de_preguntas[i]).order_by('?')[:cantidadPorPreguntas[i]]
                         preguntas.extend(queryset)
                     
                     return preguntas
                 else:
-                    queryset = Question.objects.filter(type_question_id__in=tiposDePreguntas).exclude(id__in=UserQuestionState_ids).order_by('?')[:numeroDePreguntas]#si es exacto el numero de pregunta es igual por cada uno
+                    for i in range(len(tipos_de_preguntas)):
+                        print(numeroDePreguntas/len(tipos_de_preguntas))
+                        queryset = Question.objects.filter(type_question_id__in=tipos_de_preguntas[i]).order_by('?')[:(numeroDePreguntas/len(tipos_de_preguntas))]#si es exacto el numero de pregunta es igual por cada uno
+                        preguntas.extend(queryset)
+
+                    return preguntas
         else:
             raise serializers.ValidationError("Se debe proporcionar los tipos de preguntas")
     
-        queryset = Question.objects.order_by('?')[:12]
         return  queryset
+
+class falseCharge(generics.ListAPIView):
+
+    def get(self,request): 
+        return Response({'message':'Hola'}, status.HTTP_200_OK)
+
+class bestScore(generics.RetrieveAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserBestEssayScore  # Clase serializadora utilizada
+    permission_classes = (IsAuthenticated,)  # Permiso requerido para acceder a la vista
+
+    def get_queryset(self):
+        user_pk = self.kwargs['pk']  # Obtener el ID del usuario de los parámetros de la URL
+        return CustomEssay.objects.filter(user_id=user_pk)  # Devolver los ensayos personalizados del usuario
+    
+    def list(self, request):
+        print('listado')
+        product_serializer = self.get_serializer(self.get_queryset(), many = True)
+        return Response(product_serializer.data, status=status.HTTP_200_OK)

@@ -367,7 +367,8 @@ class UserEssayHistorySerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
         data['time_essay'] = self.get_time(instance)  # Incluir el tiempo empleado en el ensayo en la representación
-        data['puntaje'] = self.get_score(instance)  # Incluir el puntaje obtenido en la representación
+        data['puntaje'] = self.get_score(instance) 
+        print(data) # Incluir el puntaje obtenido en la representación
         # Verificar si hay registros en AnswerEssayUser para el CustomEssay actual
         has_answer_essay_user = AnswerEssayUser.objects.filter(essays=instance).exists()
         if not has_answer_essay_user:
@@ -376,12 +377,10 @@ class UserEssayHistorySerializer(serializers.ModelSerializer):
 
         return data
 
-
 class TypesEssaySerializer(serializers.ModelSerializer):
     class Meta:
         model = TypesEssayCustom
         fields = ['id']  # Selecciona solo el campo 'id' del modelo EssayAnswer
-
 
 class CustomEssaySerializer(serializers.ModelSerializer):
     type_math_ids = serializers.ListField(write_only=True)  # Campo de lista solo para escritura
@@ -607,7 +606,7 @@ class UserEssayConfigTypesSerializer(serializers.ModelSerializer):
         model = UserEssayConfigTypes
         fields = ['math_type_id','math_type_type']
 
-class UserEssayConfigSerializer(serializers.ModelSerializer):
+class UserEssayConfigListSerializer(serializers.ModelSerializer):
     #type_math_ids = serializers.ListField(write_only=True)  # Campo de lista solo para escritura
     user_Essay_Config_types_all  = UserEssayConfigTypesSerializer(many=True, read_only=True, source='user_Essay_Config_types')
     #debe llamare igual que el related-name de la realcion 
@@ -617,19 +616,31 @@ class UserEssayConfigSerializer(serializers.ModelSerializer):
         model = UserEssayConfig
         #fields = ['users', 'essay_ids', 'questionNumber']
         exclude = [*generic_fields,'users','essays_types']
+
+class UserEssayConfigSerializer(serializers.ModelSerializer):
+    type_math_ids = serializers.ListField(write_only=True)  # Campo de lista solo para escritura
+    #user_Essay_Config_types_all  = UserEssayConfigTypesSerializer(many=True, read_only=True, source='user_Essay_Config_types')
+    #debe llamare igual que el related-name de la realcion 
+    #essays = UserEssayConfigTypesSerializer(many = True, read_only = True) #indicamos el mucho de la relación, en este caso el tipo de ensayo
+    
+    class Meta:
+        model = UserEssayConfig
+        #fields = ['users', 'essay_ids', 'questionNumber']
+        exclude = [*generic_fields]
     
     def validate(self, attrs):
         
         user = self.context['request'].user
         number_user_config = UserEssayConfig.objects.filter(users=user).count()
 
-        if number_user_config > 4:
+        if number_user_config > 40:
              raise serializers.ValidationError({'message': 'Actualmente, solo puedes almacenar hasta 4 configuraciones.'})
         
         return attrs
     
     def create(self, validated_data):
-        print(validated_data)
+        user = self.context['request'].user
+        print(user)
         type_math_ids = validated_data.pop('type_math_ids', [])#sacamos los id de los tipos de ensayos de los datos validados
         print(validated_data)
         user_config = UserEssayConfig.objects.create(**validated_data)  # Crear una instancia de la configuración con los datos validados
@@ -660,3 +671,46 @@ class UserEssayConfigSerializer(serializers.ModelSerializer):
 
         updateConfig.save()
         return updateConfig
+
+class UserBestEssayScore():
+
+    date = serializers.SerializerMethodField()  # Campo para obtener la fecha de creación del ensayo
+
+    class Meta:
+        model = CustomEssay
+        fields = ['id','name', 'is_custom', 'date','current_questions']  # Campos a incluir en la representación del ensayo
+
+    def get_date(self, instance):
+        return instance.created.date()  # Método para obtener la fecha de creación del ensayo
+
+    def get_best_score(self, instance):
+        if instance.current_questions == 0:
+            return 0
+        if instance.current_questions is None:
+            return 0
+        answers = AnswerEssayUser.objects.filter(essays=instance)
+        right = answers.filter(score=1).count()
+        score = 100 + (900 / instance.current_questions) * right  # Cálculo del puntaje basado en las respuestas correctas
+        return round(score)
+
+    def get_time(self, instance):
+        answer_essay_user = instance.answers_essay_user.first()
+        if answer_essay_user:
+            return answer_essay_user.time_essay
+        else:
+            return None  # Método para obtener el tiempo empleado en el ensayo
+
+    def to_representation(self, instance : CustomEssay):
+        
+        data = super().to_representation(instance) #obtenemos la data cuando se llamara al serializador del llamado al serializador
+        data['time_essay'] = self.get_time(instance)  # Incluir el tiempo empleado en el ensayo en la representación
+        data['puntaje'] = self.get_score(instance)  # Incluir el puntaje obtenido en la representación
+
+        # Verificar si hay registros en AnswerEssayUser para el CustomEssay actual
+        has_answer_essay_user = AnswerEssayUser.objects.filter(essays=instance).exists()
+        if not has_answer_essay_user:
+            # No mostrar el CustomEssay si no hay registros en AnswerEssayUser
+            return None
+
+        print(data['puntaje'])
+        return data
