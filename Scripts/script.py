@@ -75,31 +75,31 @@ dataNumeros = [
         ],
       },
       {
-        'question': "¿Cual es el resultado de: [sqrt{2} - sqrt{8} + sqrt{18}] ",
+        'question': "¿Cual es el resultado de: [\\sqrt{2} - \\sqrt{8} + \\sqrt{18}] ",
         'subject': "numeros",
         'link_resolution': "https://www.youtube.com/embed/OxgnJ-IgxA0?start=1895",
         'answer': [
           {
-            'label': "2[sqrt{2}]",
+            'label': "2[\\sqrt{2}]",
             'right': 1,
           },
           {
-            'label': "[sqrt{2}]",
+            'label': "[\\sqrt{2}]",
             'right': 0,
           },
           {
-            'label': "[sqrt{12}]",
+            'label': "[\\sqrt{12}]",
             'right': 0,
           },
           {
-            'label': "6[sqrt{2}]",
+            'label': "6[\\sqrt{2}]",
             'right': 0,
           },
         ],
       },
       {
         'question':
-          "Si [log_mlparen\\frac {8} {125}\\rparen = -3], ¿cual es el valor de m?",
+          "Si [log_m\\lparen\\frac {8} {125}\\rparen = -3], ¿cual es el valor de m?",
         'subject': "numeros",
         'link_resolution': "https://www.youtube.com/embed/OxgnJ-IgxA0?start=2031",
         'answer': [
@@ -112,7 +112,7 @@ dataNumeros = [
             'right': 0,
           },
           {
-            'label': "[{lparen\\frac {8} {125}\\rparen}^{-3}]",
+            'label': "[\\lparen\\frac {8} {125}\\rparen^-3]",
             'right': 0,
           },
           {
@@ -223,7 +223,7 @@ dataNumeros = [
         ],
       },
       {
-        'question': "¿Cual es el valor de [sqrt{8}]([sqrt{18}]-[sqrt{8})]?",
+        'question': "¿Cual es el valor de [\\sqrt{8}]([\\sqrt{18}]-[\\sqrt{8})]?",
         'subject': "numeros",
         'link_resolution': "https://www.youtube.com/embed/nKR73i6zASg?start=1154",
         'answer': [
@@ -236,7 +236,7 @@ dataNumeros = [
             'right': 0,
           },
           {
-            'label': "[sqrt{80}]",
+            'label': "[\\sqrt{80}]",
             'right': 0,
           },
           {
@@ -400,19 +400,19 @@ dataNumeros = [
         'link_resolution': "https://www.youtube.com/embed/2nghljBMp1k?start=653",
         'answer': [
           {
-            'label': "[2,2 \\codt 500]",
+            'label': "[2,2 * 500]",
             'right': 1,
           },
           {
-            'label': "[1,2 \\codt 500]",
+            'label': "[1,2 * 500]",
             'right': 0,
           },
           {
-            'label': "[50 + 20 \\codt 500]",
+            'label': "[50 + 20 * 500]",
             'right': 0,
           },
           {
-            'label': "[50 + 120 \\codt 500]",
+            'label': "[50 + 120 * 500]",
             'right': 0,
           },
         ],
@@ -526,7 +526,7 @@ dataAlgebra = [
       },
       {
         'question':
-          "Si [log_2{(-2x + 3p)} = 3] y [log_3{x +2p} = 1] ¿Cual es el valor de x-2p?",
+          "Si [log_2{(-2x + 3p)} = 3] y [log_3{(x +2p)} = 1] ¿Cual es el valor de (x - 2p)?",
         'subject': "algebra",
         'link_resolution': "https://www.youtube.com/embed/OxgnJ-IgxA0?start=5349",
         'answer': [
@@ -698,19 +698,19 @@ dataAlgebra = [
         'link_resolution': "https://www.youtube.com/embed/APzM_Ein_bE?start=197",
         'answer': [
           {
-            'label': "[7 y 5]",
+            'label': "[7] y [5]",
             'right': 1,
           },
           {
-            'label': "[-7 y -5]",
+            'label': "[-7] y [-5]",
             'right': 0,
           },
           {
-            'label': "[-14 y -10]",
+            'label': "[-14] y [-10]",
             'right': 0,
           },
           {
-            'label': "[14 y 10]",
+            'label': "[14] y [10]",
             'right': 0,
           },
         ],
@@ -728,12 +728,12 @@ dataAlgebra = [
           },
           {
             'label':
-              "Ignacio cobra un costo fijo de [$(1,5 + 2500)] a todos los productos que vende.",
+              "Ignacio cobra un costo fijo de $[(1,5 + 2500)] a todos los productos que vende.",
             'right': 0,
           },
           {
             'label':
-              "Ignacio cobra un costo fijo de [$1,5 \\cdot 2500)] a todos los productos que vende.",
+              "Ignacio cobra un costo fijo de $([1,5 \\cdot 2500)] a todos los productos que vende.",
             'right': 0,
           },
           {
@@ -856,17 +856,17 @@ dataAlgebra = [
                     },
                     {
                         'label':
-                        "p(r) = [16 \\cdot r^{2} \\cdot \\pi",
+                        "p(r) = [16 \\cdot  r^{2} \\cdot \\pi]",
                         'right': 0,
                     },
                     {
                         'label':
-                        "f(r) = [28,8 \\cdot r^{2} \\cdot \\pi",
+                        "f(r) = [28,8 \\cdot r^{2} \\cdot \\pi]",
                         'right': 0,
                     },
                     {
                         'label':
-                        "h(r) = [24 \\cdot r^{2} \\cdot \\pi",
+                        "h(r) = [24 \\cdot r^{2} \\cdot \\pi]",
                         'right': 0,
                     },
                 ],
@@ -938,25 +938,25 @@ dataProbabilidades = [
     'questions': [
       {
         'question':
-          "El dinero total que tienen ahorrado tres amigas es  [$210.000]. Se sabe que Claudia aporto el doble que Maria y que Yasna aporto el doble que Claudia. ¿Cual es el promedio de dinero aportado por Claudia y Yasna?",
+          "El dinero total que tienen ahorrado tres amigas es  $[210.000]. Se sabe que Claudia aporto el doble que Maria y que Yasna aporto el doble que Claudia. ¿Cual es el promedio de dinero aportado por Claudia y Yasna?",
         'subject': "probabilidades",
         'link_resolution':
           "https://www.youtube.com/embed/OxgnJ-IgxA0?start=13136",
         'answer': [
           {
-            'label': "[$90.000]",
+            'label': "$[90.000]",
             'right': 1,
           },
           {
-            'label': "[$70.000]",
+            'label': "$[70.000]",
             'right': 0,
           },
           {
-            'label': "[$45.000]",
+            'label': "$[45.000]",
             'right': 0,
           },
           {
-            'label': "[$35.000]",
+            'label': "$[35.000]",
             'right': 0,
           },
         ],
@@ -1013,17 +1013,17 @@ dataProbabilidades = [
       },
       {
         'question':
-          "En un mazo de cartas de naipes ingles [52 cartas], [13] de ellas son de trebol. Si se extraen del mazo dos cartas al azar, una despues de la otra y sin reposicion, ¿cual es la probabilidad de que ambas sean de trebol?",
+          "En un mazo de cartas de naipes ingles [52] cartas, [13] de ellas son de trebol. Si se extraen del mazo dos cartas al azar, una despues de la otra y sin reposicion, ¿cual es la probabilidad de que ambas sean de trebol?",
         'subject': "probabilidades",
         'link_resolution':
           "https://www.youtube.com/embed/OxgnJ-IgxA0?start=14941",
         'answer': [
           {
-            'label': "[\\frac{13}{52}] *[\\frac{12}{51}]",
+            'label': "[\\frac{13}{52}]*[\\frac{12}{51}]",
             'right': 1,
           },
           {
-            'label': "[\\frac{13}{52}] *[\\frac{12}{52}]",
+            'label': "[\\frac{13}{52}]*[\\frac{12}{52}]",
             'right': 0,
           },
           {
@@ -1031,7 +1031,7 @@ dataProbabilidades = [
             'right': 0,
           },
           {
-            'label': "[\\frac{13}{52}] +[\\frac{12}{51}]",
+            'label': "[\\frac{13}{52}]+[\\frac{12}{51}]",
             'right': 0,
           },
         ],
@@ -1390,26 +1390,26 @@ dataGeometria = [
           "https://www.youtube.com/embed/OxgnJ-IgxA0?start=12325",
         'answer': [
           {
-            'label': "[Ambas juntas, (1) y (2)]",
+            'label': "Ambas juntas, [(1) y (2)]",
             'right': 1,
           },
           {
-            'label': "[(2) por si sola]",
+            'label': "[(2)] por si sola",
             'right': 0,
           },
           {
-            'label': "[(1) por si sola]",
+            'label': "[(1)] por si sola",
             'right': 0,
           },
           {
-            'label': "[Se requier informacion adicional]",
+            'label': "Se requier informacion adicional",
             'right': 0,
           },
         ],
       },
       {
         'question':
-          "Considere los vectores [\\over'right'arrow{u}] = [(-2,5)], [\\over'right'arrow{v}] = [(3, -2)] y [\\over'right'arrow{c}] = [(-1,-4)]. ¿Cual es el vector [\\over'right'arrow{u}] + 2[\\over'right'arrow{v}] - [\\over'right'arrow{c}]?",
+          "Considere los vectores [\\overrightarrow{u}] = [(-2,5)], [\\overrightarrow{v}] = [(3, -2)] y [\\overrightarrow{c}] = [(-1,-4)]. ¿Cual es el vector [\\overrightarrow{u}] + 2[\\overrightarrow{v}] - [\\overrightarrow{c}]?",
         'subject': "geometria",
         'link_resolution': "https://www.youtube.com/embed/OxgnJ-IgxA0?start=9560",
         'answer': [
@@ -1558,26 +1558,26 @@ dataGeometria = [
         'link_resolution': "https://www.youtube.com/embed/3-qEJz0wATs?start=2382",
         'answer': [
           {
-            'label': "[x < -p] e [y > -q]",
+            'label': "[x] < [-p] e [y] > [-q]",
             'right': 1,
           },
           {
-            'label': "[x > -p e y < -q]",
+            'label': "[x] > [-p] e [y] < [-q]",
             'right': 0,
           },
           {
-            'label': "[x < p e y > q]",
+            'label': "[x] < [p] e [y] > [q]",
             'right': 0,
           },
           {
-            'label': "[x < -p e y < -q]",
+            'label': "[x] < [-p] e [y] < [-q]",
             'right': 0,
           },
         ],
       },
       {
         'question':
-          "Se necesita determinar el perímetro del rectángulo ABCD, cuyo largo y ancho miden (4x por 1) cm y (x por 2) cm, respectivamente. Se sabe que ABCD es semejante a un rectángulo cuyo largo y ancho miden 10 cm y 8cm, respectivamente.[\\newline]Para determinar el perímetro del rectángulo ABCD se realiza el siguiente procedimiento, cometiéndose un error: [\\newline] Paso 1: como los rectángulos son semejantes se plantea la expresión: [\\frac{4x + 1}{8} = \\frac{x + 2}{10}\\newline] Paso 2: se resuelve la expresión anterior, obteniéndose [x = \\fraac{3}{16} \\newline]Paso 3: se reemplaza este valor de x en (4x  1) cm y (x  2) cm, obteniéndose que el largo y el ancho del rectángulo son [\\frac{7}{4}]cm y [\\frac{35}{16}]cm, respectivamente.[\\newline]Paso 4: se calcula el perímetro del rectángulo obteniéndose [\\frac{63}{8}]cm.[\\newline]¿En cuál de los pasos se cometió el error?",
+          "Se necesita determinar el perímetro del rectángulo ABCD, cuyo largo y ancho miden (4x por 1) cm y (x por 2) cm, respectivamente. Se sabe que ABCD es semejante a un rectángulo cuyo largo y ancho miden 10 cm y 8cm, respectivamente.[\\newline]Para determinar el perímetro del rectángulo ABCD se realiza el siguiente procedimiento, cometiéndose un error: [\\newline] Paso 1: como los rectángulos son semejantes se plantea la expresión: [\\frac{4x + 1}{8} = \\frac{x + 2}{10}\\newline] Paso 2: se resuelve la expresión anterior, obteniéndose [x = \\frac{3}{16} \\newline]Paso 3: se reemplaza este valor de x en (4x  1) cm y (x  2) cm, obteniéndose que el largo y el ancho del rectángulo son [\\frac{7}{4}]cm y [\\frac{35}{16}]cm, respectivamente.[\\newline]Paso 4: se calcula el perímetro del rectángulo obteniéndose [\\frac{63}{8}]cm.[\\newline]¿En cuál de los pasos se cometió el error?",
         'subject': "geometria",
         'link_resolution': "https://www.youtube.com/embed/3-qEJz0wATs?start=1758",
         'answer': [
@@ -1625,7 +1625,7 @@ dataGeometria = [
       },
       {
         'question':
-          "A un punto P del plano cartesiano se le aplica una reflexión respecto al origen de este obteniéndose el punto Q, luego el punto Q se traslada según el vector [\\over'right'arrow{v} = (-2, 3)] obteniéndose el punto R.[\\newline] Si R tiene coordenadas [(5, 4)] , ¿cuáles son las coordenadas del punto P ? ",
+          "A un punto P del plano cartesiano se le aplica una reflexión respecto al origen de este obteniéndose el punto Q, luego el punto Q se traslada según el vector [\\overrightarrow{v} = (-2, 3)] obteniéndose el punto R.[\\newline] Si R tiene coordenadas [(5, 4)] , ¿cuáles son las coordenadas del punto P ?",
         'subject': "geometria",
         'link_resolution': "https://www.youtube.com/embed/GFcXxDORRvo?start=560",
         'answer': [
@@ -1781,29 +1781,6 @@ dataGeometria = [
                 },
                 {
                 'label': '5',
-                'right': 0
-                }
-                ]
-                },
-                {
-                'question': 'Si un triángulo tiene una base de 8 unidades y una altura de 6 unidades, ¿cuál es su área?',
-                'subject': 'geometria',
-                'link_resolution':'https://www.youtube.com/embed/GFcXxDORRvo?start=560',
-                'answer': [
-                {
-                'label': '24 unidades cuadradas',
-                'right': 1
-                },
-                {
-                'label': '12 unidades cuadradas',
-                'right': 0
-                },
-                {
-                'label': '18 unidades cuadradas',
-                'right': 0
-                },
-                {
-                'label': '30 unidades cuadradas',
                 'right': 0
                 }
                 ]

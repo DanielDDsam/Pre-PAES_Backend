@@ -667,7 +667,7 @@ class CustomEssayMostRecentResumeView(generics.ListAPIView):
     
     def get_queryset(self, pk=None):
         user_pk = self.kwargs['pk']  # Obtener el ID del usuario de los parámetros de la URL
-        queryset = CustomEssay.objects.filter(user_id=user_pk).order_by('created')
+        queryset = CustomEssay.objects.filter(user_id=user_pk).order_by('-created')
         return queryset # Devolver los ensayos personalizados del usuario
     
     def list(self, request, pk):
