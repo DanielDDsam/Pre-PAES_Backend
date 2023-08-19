@@ -586,15 +586,22 @@ class bestAverageScore(generics.ListAPIView):
 
     def get_queryset(self):
         user_pk = self.kwargs['pk']  # Obtener el ID del usuario de los parámetros de la URL
-        return CustomEssay.objects.filter(user_id=user_pk)  # Devolver los ensayos personalizados del usuario
+        return CustomEssay.objects.filter(user_id=user_pk).order_by('-created')  # Devolver los ensayos personalizados del usuario
     
     def list(self, request, pk):
         product_serializer = self.get_serializer(self.get_queryset(), many = True)
+
+        #data = self.functionEssays(self.get_queryset())
+
+        #if data == 0:
+         #   return Response({'message':'No hay ensayos realizados por el usuario'}, status=status.HTTP_204_NO_CONTENT)
+        #else:
         bestScore = self.hig_score(product_serializer.data)
         average = self.average_score(product_serializer.data)
         print(bestScore)
         print(average)
         return Response({'bestScore':bestScore,'average':average}, status=status.HTTP_200_OK)
+        #return Response({'bestScore':bestScore,'average':average, 'data':data}, status=status.HTTP_200_OK)
     
     
     def hig_score(self, data):
@@ -617,6 +624,24 @@ class bestAverageScore(generics.ListAPIView):
             
         average = average/validEssayCount        
         return average
+    
+    def functionEssays(self, queryset):
+
+        data = []
+        error = {}
+        count = 0
+        for i in range(len(queryset)):
+            serializer = UserBestEssayScore(queryset[i])
+            if len(serializer.data) != 0 & count <= 5: #si el largo es 0 quiere decir que es un ensayo sin respuestas  
+                data.append(serializer.data)
+                count+=1
+            
+            if count == 5:
+                return data
+        
+        if count == 0:
+            return 0
+        return data
     
 class CustomEssayMostRecentView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
