@@ -20,26 +20,42 @@ class GenericAttributes(models.Model):
 
 # Clase del modelo UserManager
 class UserManager(BaseUserManager):
-    def create_user(self, email, password=None):
-        if not email:
-            raise ValueError('Users must have an email address')
 
+    def _create_user(self, email, username, is_admin, is_active, password=None):
+        print(is_admin)
         user = self.model(
             email=self.normalize_email(email),
+            username = username,
+            is_admin = is_admin,
+            is_active = is_active, 
         )
-
         user.set_password(password)
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, email, password=None):
-        user = self.create_user(
+    def create_user(self, email, username, password=None):
+        if not email:
+            raise ValueError('Users must have an email address')
+
+        return self._create_user(
             email,
-            password=password,
+            username, 
+            False,
+            True, 
+            password
         )
-        user.is_admin = True
-        user.save(using=self._db)
-        return user
+
+    def create_superuser(self, email, username, password=None):
+        if not email:
+            raise ValueError('Users must have an email address')
+        
+        return self._create_user(
+            email,
+            username,
+            True,
+            True, 
+            password
+        )
 
 #Clase del modelo Users
 class Users(AbstractBaseUser,GenericAttributes):
@@ -49,6 +65,7 @@ class Users(AbstractBaseUser,GenericAttributes):
     )
     is_admin = models.BooleanField(**common_args,default=False)
     username = models.TextField(**common_args)
+    is_active = models.BooleanField(**common_args, default = True)
     #schoolType = models.CharField(**common_args, max_length=255)
     #academicDegree = models.CharField(**common_args, max_length=255)
 
@@ -93,7 +110,7 @@ class TypesEssayCustom(GenericAttributes):
 class Question(GenericAttributes):
     question = models.TextField(**common_args)
     subject = models.TextField(**common_args)
-    link_resolution = models.URLField(**common_args)
+    link_resolution = models.URLField(**common_args, unique=True)
     type_question = models.ForeignKey(MathType, **common_args,on_delete=models.CASCADE, related_name='question_type')
     users = models.ManyToManyField(Users, blank=True, through='UserQuestionState', related_name='question_user') #18-07
 

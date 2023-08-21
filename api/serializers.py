@@ -23,10 +23,11 @@ class UserSerializer(serializers.ModelSerializer):
 # Serializador para el login del usuario
 class UserLoginSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(max_length=255)
+    is_admin = serializers.BooleanField(default=False)
 
     class Meta:
         model = Users
-        fields = ['email', 'password','username']
+        fields = ['email', 'password','username','is_admin']
 
 # Serializador para el perfil del usuario
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -59,6 +60,30 @@ class RegistrationSerializer(serializers.ModelSerializer):
         # Establecer la contraseña del usuario y guardarlo
         user.set_password(password)
         user.save()
+        return user
+
+class RegistrationAdminSerializer(serializers.ModelSerializer):
+    # Atributos requeridos para el registro del usuario
+    password2 = serializers.CharField(style={"input_type": "password"}, write_only=True)
+    username = serializers.CharField(max_length=255)
+
+    class Meta:
+        model = Users
+        fields = ['email', 'username', 'password', 'password2']
+        extra_kwargs = {
+            'password': {'write_only': True}
+        }
+
+    # Método para guardar el usuario en la base de datos
+    def save(self):
+        password = self.validated_data['password']
+        password2 = self.validated_data['password2']
+        if password != password2:
+            raise serializers.ValidationError({'password': 'Las contraseñas deben coincidir.'})
+
+        user = Users.objects.create_superuser(email=self.validated_data['email'], username=self.validated_data['username'], password=self.validated_data['password'])
+        # Verificar que las contraseñas coincidan
+        
         return user
 
 

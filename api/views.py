@@ -38,9 +38,19 @@ class UsersListCreate(generics.ListCreateAPIView):
 class RegisterView(APIView):
     def post(self, request):
         serializer = RegistrationSerializer(data=request.data)  # Serializador utilizado para validar y procesar los datos del formulario
+        print(serializer)
         if serializer.is_valid():
             serializer.save()  # Guarda los datos del nuevo usuario en la base de datos
             return Response(serializer.data, status=status.HTTP_201_CREATED)  # Retorna los datos del usuario registrado en la respuesta con un código de estado 201 (CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  # Retorna los errores de validación en la respuesta con un código de estado 400 (BAD REQUEST)
+
+class RegisterAdminView(APIView):
+    def post(self, request):
+        serializer = RegistrationAdminSerializer(data=request.data)  # Serializador utilizado para validar y procesar los datos del formulario
+        print('hola')
+        if serializer.is_valid():
+            serializer.save()  # Guarda los datos del nuevo usuario en la base de datos
+            return Response({'message':'admin created', 'data':serializer.data}, status=status.HTTP_201_CREATED)  # Retorna los datos del usuario registrado en la respuesta con un código de estado 201 (CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  # Retorna los errores de validación en la respuesta con un código de estado 400 (BAD REQUEST)
 
 
@@ -51,10 +61,16 @@ class LoginView(APIView):
         serializer = UserLoginSerializer(data=request.data)  # Serializador utilizado para validar y procesar los datos del formulario
         serializer.is_valid(raise_exception=True)  # Valida los datos y lanza una excepción si no son válidos
         email = serializer.data.get('email')  # Obtiene el email del usuario del serializador
-        password = serializer.data.get('password')  # Obtiene la contraseña del usuario del serializador
+        password = serializer.data.get('password')  # Obtiene la contraseña del usuario del serializadorprint(user)
         user = authenticate(email=email, password=password)  # Autentica al usuario utilizando el email y la contraseña
         if user is not None:
             token = get_tokens_for_user(user)  # Obtiene el token de acceso para el usuario autenticado
+
+            #21-08
+            admin = user.is_admin
+    
+            if admin is True:
+                return Response({'token': token, 'msg': 'Inicio de sesión exitoso', 'status': 'ok','user_id':user.id, 'username':user.username, 'is_admin':user.is_admin}, status=status.HTTP_200_OK)  # Retorna el token de acceso en la respuesta con un mensaje de éxito y un código de estado 200 (OK)
             return Response({'token': token, 'msg': 'Inicio de sesión exitoso', 'status': 'ok','user_id':user.id, 'username':user.username}, status=status.HTTP_200_OK)  # Retorna el token de acceso en la respuesta con un mensaje de éxito y un código de estado 200 (OK)
         else:
             return Response({'errors': {'error_de_campo': ['Email o contraseña invalidos']}}, status=status.HTTP_404_NOT_FOUND)  # Retorna un mensaje de error en la respuesta con un código de estado 404 (NOT FOUND)

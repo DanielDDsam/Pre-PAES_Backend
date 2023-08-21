@@ -12,6 +12,7 @@ urlpatterns = [
     re_path(r'^user(s)?/(?P<pk>[0-9]+)/$', views.UsersRetrieveUpdateDestroy.as_view()),#Endpoint para consultar, eliminar, actualizar un usuario específico
     re_path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),#Endpoint para obtener un token
     re_path('api/register/', views.RegisterView.as_view(), name='register'),#Endpoint para registrar usuario
+    re_path('api/register_admin/', views.RegisterAdminView.as_view(), name='registerAdmin'),#Endpoint para registrar usuario
     re_path('api/login/', views.LoginView.as_view(), name='login'),#Endpoint para iniciar sesión
     re_path('api/logout/', views.LogoutView.as_view(), name='logout'),#Endpoint para cerrar sesión
     re_path('api/token-refresh/', jwt_views.TokenRefreshView.as_view(), name='token_refresh'),#Endpoint para refrescar el token
