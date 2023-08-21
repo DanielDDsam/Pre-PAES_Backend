@@ -164,7 +164,7 @@ class QuestionList(generics.ListAPIView):
     serializer_class = QuestionSerializer  # Clase serializadora utilizada
 
     filter_backends = [DjangoFilterBackend]  # Filtros aplicados a la vista
-    filterset_fields = ['id', 'essays', 'question', 'subject', 'link_resolution']  # Campos permitidos para filtrar
+    filterset_fields = ['id', 'type_question', 'question', 'subject', 'link_resolution']  # Campos permitidos para filtrar
 
 
 class QuestionRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
