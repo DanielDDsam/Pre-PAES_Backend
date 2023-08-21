@@ -627,7 +627,9 @@ class bestAverageScore(generics.ListAPIView):
             if data[i] != []: #evitamos que tome ensayos incompletos
                 if(score < data[i]['puntaje']):
                     score = data[i]['puntaje']
-                    dataScore = data[i]     
+                    dataScore = data[i]    
+        if (range(len(data)) == 0):
+            return 0
         return dataScore
     
     def average_score(self, data):
@@ -637,9 +639,11 @@ class bestAverageScore(generics.ListAPIView):
             if data[i] != []: #evitamos que tome ensayos incompletos
                 average += int(data[i]['puntaje'])
                 validEssayCount+=1
-            
-        average = average/validEssayCount        
-        return average
+
+        if (validEssayCount != 0):    
+            average = average/validEssayCount  
+            return average    
+        return 0
     
     def functionEssays(self, queryset):
 
