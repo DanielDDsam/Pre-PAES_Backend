@@ -63,6 +63,7 @@ class LoginView(APIView):
         email = serializer.data.get('email')  # Obtiene el email del usuario del serializador
         password = serializer.data.get('password')  # Obtiene la contraseña del usuario del serializadorprint(user)
         user = authenticate(email=email, password=password)  # Autentica al usuario utilizando el email y la contraseña
+        #user devuelve el objeto user
         if user is not None:
             token = get_tokens_for_user(user)  # Obtiene el token de acceso para el usuario autenticado
 
@@ -238,7 +239,7 @@ class CustomEssayView(generics.CreateAPIView):
 
 
 class CustomEssayQuestionView(generics.ListCreateAPIView):
-    queryset = CustomEssayQuestion.objects.filter(is_deleted=False)  # Consulta para obtener las relaciones entre ensayos personalizados y preguntas que no han sido eliminadas
+    queryset = PrePAESQuestion.objects.filter(is_deleted=False)  # Consulta para obtener las relaciones entre ensayos personalizados y preguntas que no han sido eliminadas
     serializer_class = CustomEssayQuestionSerializer  # Clase serializadora utilizada
     permission_classes = (IsAuthenticated,)  # Permiso requerido para acceder a la vista
 
@@ -392,18 +393,33 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
                 queryset = Question.objects.all().order_by('?')
         else:
             queryset = Question.objects.filter(id=pregunta.question_id) #si la pregunta no es nueva, es reforzar o correcta la obtenemos 
+        
+  
         return queryset
 
     def list(self, request):
         # Note the use of `get_queryset()` instead of `self.queryset`
-        print('queryset')
+        
         queryset = self.get_queryset().first()
         serializer = QuestionOneSerializer(queryset) 
-        print(queryset)
+        self.save_obtain_question(serializer.data)
         return Response(serializer.data)
     
-    def save_obtain_question(self,request):#aqui cristian soy tu yo del pasado, recuerda que aqui va pregunta obtenida, ya que en el metodo pre-paes se puede salir sin problemas, por lo tanto debemos guardarla pasa así saber de donde retornarla 17_08
-        pass
+    def save_obtain_question(self,questionData):#aqui cristian soy tu yo del pasado, recuerda que aqui va pregunta obtenida, ya que en el metodo pre-paes se puede salir sin problemas, por lo tanto debemos guardarla pasa así saber de donde retornarla 17_08
+        user = self.request.user#obtenemos el usuario actual 
+
+        # obtener el id del ultimo ensayo prePAES
+        queryset = CustomEssay.objects.filter(user = user, prePaes = True).order_by('-created')
+        queryset = queryset[0]
+        essaySerializer = CustomEssaySerializer(queryset)
+    
+        #Guardamos la convinación de el ensayo y la pregunta
+        serializer = CustomEssayQuestionSerializer(data={'custom_essay':essaySerializer.data['id'],'question':questionData['id']}) 
+        serializer.is_valid()
+        serializer.save()
+    
+        return True
+    
     
     def obtener_pregunta(self, user):
     # Contadores de preguntas correctas y reforzar
@@ -617,7 +633,7 @@ class bestAverageScore(generics.ListAPIView):
         print(bestScore)
         print(average)
         return Response({'bestScore':bestScore,'average':average}, status=status.HTTP_200_OK)
-        #return Response({'bestScore':bestScore,'average':average, 'data':data}, status=status.HTTP_200_OK)
+        #return Response({'bestScore':bestScore,'average':average, 'data':data}, status=status.HTTP_200_OK) #este retorna todo junto
     
     
     def hig_score(self, data):
@@ -678,7 +694,7 @@ class CustomEssayMostRecentView(generics.ListAPIView):
             serializer = UserBestEssayScore(queryset[i])
             if len(serializer.data) != 0: #si el largo es 0 quiere decir que es un ensayo sin respuestas  
         
-                return Response(serializer.data, status=status.HTTP_200_OK)
+                return Response(serializer.data, status=status.HTTP_200_OK)#retoramos el primero ya que es el más reciente
         return Response({'message':'No hay ensayos realizados por el usuario'}, status=status.HTTP_204_NO_CONTENT)
 
 class CustomEssayMostRecentResumeView(generics.ListAPIView):
@@ -706,4 +722,33 @@ class CustomEssayMostRecentResumeView(generics.ListAPIView):
         if count == 0:
             return Response({'message':'No hay ensayos realizados por el usuario'}, status=status.HTTP_204_NO_CONTENT)
         return Response(data, status=status.HTTP_200_OK)
-    
+
+class UserPrePAESQuestionsListViews(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserPrePAESData  # Clase serializadora utilizada
+
+    def get_queryset(self):
+        user = self.request.user  # Obtener el ID del usuario de los parámetros de la URL
+        queryset = CustomEssay.objects.filter(user = user, prePaes = True).order_by('-created')
+        return queryset # Devolver los ensayos personalizados del usuario del tipo prePAES
+
+    def list(self, request):
+        queryset = self.get_queryset()
+        data = []
+        indiceDatos = 0
+        for i in range(len(queryset)):
+            serializer = UserPrePAESData(queryset[i])
+
+            if(len(serializer.data['user_Essay_PrePAES']) != 0):
+                
+                data.append(serializer.data)
+                for j in range(len(data[indiceDatos]['user_Essay_PrePAES'])):
+                    
+                    print(data[indiceDatos]['user_Essay_PrePAES'][j]['question_id'])
+                    querysetState = UserQuestionState.objects.filter(users = self.request.user, question_id = data[indiceDatos]['user_Essay_PrePAES'][j]['question_id']).order_by('-created')
+                    serializerState = UserQuestionStateSerializer(querysetState[0])
+                    data[indiceDatos]['user_Essay_PrePAES'][j]['question_state'] = serializerState.data['state']
+
+                indiceDatos += 1
+        
+        return Response(data, status=status.HTTP_200_OK)

@@ -23,11 +23,10 @@ class UserSerializer(serializers.ModelSerializer):
 # Serializador para el login del usuario
 class UserLoginSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(max_length=255)
-    is_admin = serializers.BooleanField(default=False)
 
     class Meta:
         model = Users
-        fields = ['email', 'password','username','is_admin']
+        fields = ['email', 'password','username']
 
 # Serializador para el perfil del usuario
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -415,7 +414,7 @@ class CustomEssaySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomEssay
-        fields = ('id', 'is_custom', 'name', 'type_math_ids', 'essay_custom', 'user','current_questions')
+        fields = ('id', 'is_custom', 'name', 'type_math_ids', 'essay_custom', 'user','current_questions','prePaes')
 
     def validate(self, attrs):
         type_math_ids = attrs.get('type_math_ids', [])
@@ -445,20 +444,20 @@ class CustomEssaySerializer(serializers.ModelSerializer):
         return custom_essay
 
 
-class CustomEssayQuestionSerializer(serializers.ModelSerializer):
+class CustomEssayQuestionSerializer(serializers.ModelSerializer): #modificado el 12-09 para provar la obtencion de pregunta de prepaes
     # Campo 'questions' que es una lista de claves primarias relacionadas con el modelo Question
-    questions = serializers.ListField(child=serializers.PrimaryKeyRelatedField(queryset=Question.objects.filter(is_deleted=False)))
 
     class Meta:
-        model = CustomEssayQuestion
-        fields = ['custom_essay', 'questions']  # Campos del serializador
+        model = PrePAESQuestion
+        fields = ['custom_essay', 'question']  # Campos del serializador
 
-    def validate(self, attrs):
+
+    """def validate(self, attrs):
         custom_essay = attrs.get('custom_essay')  # Obtener el ID del ensayo personalizado
         questions = attrs.get('questions')  # Obtener las claves primarias de las preguntas seleccionadas
-
+        print(custom_essay.id)
         try:
-            custom_essay_obj = CustomEssay.objects.get(id=custom_essay)  # Obtener el objeto CustomEssay correspondiente al ID
+            custom_essay_obj = CustomEssay.objects.get(id=custom_essay.id)  # Obtener el objeto CustomEssay correspondiente al ID
         except CustomEssay.DoesNotExist:
             raise serializers.ValidationError('El ensayo personalizado no existe.')  # Validar que el ensayo personalizado exista
 
@@ -474,7 +473,7 @@ class CustomEssayQuestionSerializer(serializers.ModelSerializer):
             except Question.DoesNotExist:
                 raise serializers.ValidationError('Una o más preguntas no existen en los ensayos predefinidos seleccionados del ensayo personalizado.')  # Validar que las preguntas existan en los ensayos predefinidos seleccionados
 
-        return attrs
+        return attrs"""
 
 
 
@@ -562,7 +561,7 @@ class QuestionOneSerializer(QuestionSerializer):
 class UserQuestionStateSerializer(serializers.ModelSerializer): #18-07 este solo se usara para mostar los datos de esta tabla, ya que como tiene elementos de otras, lo idel es usar el de abajo para crearlos
     class Meta:
         model = UserQuestionState
-        fields = ['state','question_id','user_id']
+        fields = ['state','question_id','users_id']
 
 class SaveUserQuestionState(serializers.Serializer): #18-07
     answer_id = serializers.IntegerField()
@@ -740,3 +739,34 @@ class UserBestEssayScore(serializers.ModelSerializer):
 
         
         return data
+
+#13-09 
+
+
+class PrePAESQuestionSerializer(serializers.ModelSerializer): 
+    
+    question_id = serializers.IntegerField(source='question.id')
+    question_subject = serializers.CharField(source='question.subject')
+
+    class Meta:
+        model = PrePAESQuestion
+        fields = ['question_id', 'question_subject']  # Campos del serializador 
+
+class UserPrePAESData(serializers.ModelSerializer): #si pones solo serializer.Serializer solo mostrara los campos definidos como user_Essay_PrePAES, no el del moldeo
+    
+    user_Essay_PrePAES  = PrePAESQuestionSerializer(many=True, read_only=True, source='prePAES_question')
+    # Agrega más campos según sea necesario
+
+    class Meta:
+        model = CustomEssay
+        exclude = [*generic_fields,'is_custom','name','current_questions','user','type_essay']
+
+    """def to_representation(self, instance):
+        
+        data = super().to_representation(instance)
+        print(data)
+        data['test'] = 'test'
+        #questionState = UserQuestionState.objects.filter(question_id = questions.id, users = self.request.user) #obtenemos el estado de las preguntas 
+
+        return data"""
+    

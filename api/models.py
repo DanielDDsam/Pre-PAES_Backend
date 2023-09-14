@@ -122,9 +122,9 @@ class UserQuestionState(GenericAttributes): #18-07
 
 
 # Clase del modelo CustomEssayQuestion
-class CustomEssayQuestion(GenericAttributes):
-    custom_essay = models.OneToOneField(CustomEssay, on_delete=models.CASCADE)
-    question = models.OneToOneField(Question, on_delete=models.CASCADE)
+class PrePAESQuestion(GenericAttributes):
+    custom_essay = models.ForeignKey(CustomEssay, **common_args, on_delete=models.CASCADE,related_name='prePAES_question')
+    question = models.ForeignKey(Question, on_delete=models.CASCADE,related_name='prePAES_question')
 
 
 # Clase del modelo Answer
