@@ -83,12 +83,20 @@ class Users(AbstractBaseUser,GenericAttributes):
     def is_staff(self):
         return self.is_admin
 
+#clase de logros 21-09-2023
+class Achievement(GenericAttributes):
+    name = models.TextField(**common_args)
+    image_url = models.TextField(**common_args)
+
+#clase de logros 21-09-2023
+class UserAchievement(GenericAttributes):
+    user = models.ForeignKey(Users, **common_args, on_delete=models.CASCADE, related_name='user_achievement')
+    achievement = models.ForeignKey(Achievement, **common_args, on_delete=models.CASCADE, related_name='user_achievement')
 
 # Clase del modelo Essay
 class MathType(GenericAttributes):
     name = models.TextField(**common_args)
     type = models.TextField(**common_args)
-
 
 # Clase del modelo CustomEssay
 class CustomEssay(GenericAttributes):
@@ -99,12 +107,15 @@ class CustomEssay(GenericAttributes):
     current_questions = models.IntegerField(**common_args)
     prePaes = models.BooleanField(default=False)#10-08-2023
 
+# Clase del modelo CustomEssay #21-09-2023
+class PrePAES(GenericAttributes):
+    number_phase = models.IntegerField(**common_args)
+    user = models.ForeignKey(Users, **common_args, on_delete=models.CASCADE, related_name='PrePAES_user')
 
 # Clase del modelo EssayAnswer
 class TypesEssayCustom(GenericAttributes):
     type_essays = models.ForeignKey(MathType, **common_args,on_delete=models.CASCADE, related_name='type_essay_custom')
     custom_essay = models.ForeignKey(CustomEssay, **common_args,on_delete=models.CASCADE, related_name='essay_custom')
-
 
 # Clase del modelo Question
 class Question(GenericAttributes):
@@ -114,6 +125,12 @@ class Question(GenericAttributes):
     type_question = models.ForeignKey(MathType, **common_args,on_delete=models.CASCADE, related_name='question_type')
     users = models.ManyToManyField(Users, blank=True, through='UserQuestionState', related_name='question_user') #18-07
 
+#Clase de errores #21-09-2023
+class QuestionError(GenericAttributes):
+    message = models.TextField(**common_args)
+    type_error = models.CharField(**common_args, max_length=255)
+    question = models.ForeignKey(Question, **common_args, on_delete=models.CASCADE, related_name='question_error')
+
 # Clase del modelo UserQuestionState
 class UserQuestionState(GenericAttributes): #18-07
     question = models.ForeignKey(Question, **common_args, on_delete=models.CASCADE,related_name='user_question_state')
@@ -121,10 +138,14 @@ class UserQuestionState(GenericAttributes): #18-07
     state = models.TextField(**common_args)
 
 
-# Clase del modelo CustomEssayQuestion
+# Clase del modelo CustomEssayQuestion #21-09-2023
 class PrePAESQuestion(GenericAttributes):
-    custom_essay = models.ForeignKey(CustomEssay, **common_args, on_delete=models.CASCADE,related_name='prePAES_question')
+    pre_PAES = models.ForeignKey(PrePAES, **common_args, on_delete=models.CASCADE,related_name='prePAES_question')
     question = models.ForeignKey(Question, on_delete=models.CASCADE,related_name='prePAES_question')
+
+class CustomEssayQuestion(GenericAttributes):
+    custom_essay = models.ForeignKey(CustomEssay, **common_args, on_delete=models.CASCADE,related_name='essay_question')
+    question = models.ForeignKey(Question, on_delete=models.CASCADE,related_name='essay_question')
 
 
 # Clase del modelo Answer
@@ -136,13 +157,19 @@ class Answer(GenericAttributes):
     essay = models.ManyToManyField(CustomEssay, blank=True, through='AnswerEssayUser', related_name='answer')
 
 
-# Clase del modelo AnswerEssayUser
+# Clase del modelo AnswerEssayUser 
 class AnswerEssayUser(GenericAttributes):
     answers = models.ForeignKey(Answer, **common_args, on_delete=models.CASCADE, related_name='answers_essay_user')
     essays = models.ForeignKey(CustomEssay, **common_args, on_delete=models.CASCADE, related_name='answers_essay_user')
     users = models.ForeignKey(Users, **common_args, on_delete=models.CASCADE, related_name='answers_essay_user')
     score = models.IntegerField(**common_args)
     time_essay = models.TextField(**common_args)
+
+# Clase del modelo AnswerPrePAES #21-09-2023
+class AnswerPrePAES(GenericAttributes):
+    answers = models.ForeignKey(Answer, **common_args, on_delete=models.CASCADE, related_name='answers_prePAES_user')
+    pre_PAES = models.ForeignKey(PrePAES, **common_args, on_delete=models.CASCADE, related_name='answers_prePAES_user')
+    users = models.ForeignKey(Users, **common_args, on_delete=models.CASCADE, related_name='answers_prePAES_user')
 
 class UserEssayConfig(GenericAttributes): #25-07
     name = models.TextField(**common_args)

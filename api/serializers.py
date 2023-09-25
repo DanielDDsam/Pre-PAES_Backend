@@ -448,7 +448,7 @@ class CustomEssayQuestionSerializer(serializers.ModelSerializer): #modificado el
     # Campo 'questions' que es una lista de claves primarias relacionadas con el modelo Question
 
     class Meta:
-        model = PrePAESQuestion
+        model = CustomEssayQuestion
         fields = ['custom_essay', 'question']  # Campos del serializador
 
 
@@ -742,24 +742,23 @@ class UserBestEssayScore(serializers.ModelSerializer):
 
 #13-09 
 
-
 class PrePAESQuestionSerializer(serializers.ModelSerializer): 
     
-    question_id = serializers.IntegerField(source='question.id')
+    question_id = serializers.IntegerField(source='question.id')#indicamos que queremos los id
     question_subject = serializers.CharField(source='question.subject')
 
     class Meta:
         model = PrePAESQuestion
-        fields = ['question_id', 'question_subject']  # Campos del serializador 
+        fields = ['question_id', 'question_subject']  # Campos del serializador los que se mostraran
 
 class UserPrePAESData(serializers.ModelSerializer): #si pones solo serializer.Serializer solo mostrara los campos definidos como user_Essay_PrePAES, no el del moldeo
     
-    user_Essay_PrePAES  = PrePAESQuestionSerializer(many=True, read_only=True, source='prePAES_question')
+    user_PrePAES  = PrePAESQuestionSerializer(many=True, read_only=True, source='prePAES_question')#source el nombre de related name, indicamos que obtenga tambien los datos de este serializador dada la relación
     # Agrega más campos según sea necesario
 
     class Meta:
-        model = CustomEssay
-        exclude = [*generic_fields,'is_custom','name','current_questions','user','type_essay']
+        model = PrePAES
+        exclude = [*generic_fields]
 
     """def to_representation(self, instance):
         
@@ -769,4 +768,67 @@ class UserPrePAESData(serializers.ModelSerializer): #si pones solo serializer.Se
         #questionState = UserQuestionState.objects.filter(question_id = questions.id, users = self.request.user) #obtenemos el estado de las preguntas 
 
         return data"""
+
+class PrePAESSaveQuestionSerializer(serializers.ModelSerializer): #modificado el 12-09 para provar la obtencion de pregunta de prepaes
+    # Campo 'questions' que es una lista de claves primarias relacionadas con el modelo Question
+
+    class Meta:
+        model = PrePAESQuestion
+        fields = ['pre_PAES', 'question']  # Campos del serializador
+    
+    def create(self, validated_data):
+        prePAESid = validated_data.get('pre_PAES') 
+        question = validated_data.get('question') 
+
+        prePAES_user = PrePAESQuestion.objects.create(pre_PAES_id = prePAESid.id, question_id = question.id)
+        return prePAES_user
+
+
+#21-09-2023
+class PrePAESCreateSerializer(serializers.ModelSerializer): #si pones solo serializer.Serializer solo mostrara los campos definidos como user_Essay_PrePAES, no el del moldeo
+
+    class Meta:
+        model = PrePAES
+        exclude = [*generic_fields]
+    
+    def create(self, validated_data):
+        user = self.context['request'].user
+        nunero_fase = len(PrePAES.objects.filter(user = user)) #identifica en que fase se encuentra, si es el primero, parte en 0
+        prePAES_user = PrePAES.objects.create(user = user, number_phase = nunero_fase+1) #se suma en 1 siempre el numero de fase para ser mayor que el anterior
+        return prePAES_user
+
+#22-09-2023
+class AnswerPrePAESSerializer(serializers.ModelSerializer): #si pones solo serializer.Serializer solo mostrara los campos definidos como user_Essay_PrePAES, no el del moldeo
+
+    class Meta:
+        model = AnswerPrePAES
+        exclude = [*generic_fields]
+
+#22-09-2023
+class SaveAnswerPrePAESSerializer(serializers.Serializer):
+    answer_id = serializers.IntegerField()
+
+    def create(self, data):
+        print(self.data)
+        answer = data.get('answer_id')
+        user = self.context['request'].user
+        print(answer)
+        # Crear objetos AnswerEssayUser para la respuesta seleccionada
+        answer = get_object_or_404(Answer, pk=answer)
+        print('hola')
+        print(answer)
+        prePAES = PrePAES.objects.filter(user=user).order_by('-created')
+        prePAES = prePAES[0]
+
+        print(prePAES)
+
+        if AnswerPrePAES.objects.filter(answers=answer, pre_PAES=prePAES, users=user).exists():
+                raise serializers.ValidationError('Ya existe una respuesta para esta combinación de AnswerPrePAES y Answer.')
+        
+        prePAES_answer = AnswerPrePAES.objects.create(answers=answer, pre_PAES=prePAES, users=user)
+
+        print(prePAES_answer)
+        return prePAES_answer
+
+
     
