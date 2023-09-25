@@ -741,6 +741,14 @@ class UserBestEssayScore(serializers.ModelSerializer):
         return data
 
 #13-09 
+class PrePAESAnswerSerializer(serializers.ModelSerializer): #si pones solo serializer.Serializer solo mostrara los campos definidos como user_Essay_PrePAES, no el del moldeo
+
+    answer_state = serializers.BooleanField(source='answers.right')
+    answer_id = serializers.IntegerField(source='answers.id')
+
+    class Meta:
+        model = AnswerPrePAES
+        fields = ['answer_state','answer_id']
 
 class PrePAESQuestionSerializer(serializers.ModelSerializer): 
     
@@ -752,7 +760,7 @@ class PrePAESQuestionSerializer(serializers.ModelSerializer):
         fields = ['question_id', 'question_subject']  # Campos del serializador los que se mostraran
 
 class UserPrePAESData(serializers.ModelSerializer): #si pones solo serializer.Serializer solo mostrara los campos definidos como user_Essay_PrePAES, no el del moldeo
-    
+    user_answer = PrePAESAnswerSerializer(many=True, read_only=True, source='answers_prePAES_user')#25-09-2023 recuerda cristian que pusustte eso porque tambien podria sacar el tema de si el usuario respondio bien o mal linkeando con answerPrePAES
     user_PrePAES  = PrePAESQuestionSerializer(many=True, read_only=True, source='prePAES_question')#source el nombre de related name, indicamos que obtenga tambien los datos de este serializador dada la relación
     # Agrega más campos según sea necesario
 
@@ -799,11 +807,10 @@ class PrePAESCreateSerializer(serializers.ModelSerializer): #si pones solo seria
 
 #22-09-2023
 class AnswerPrePAESSerializer(serializers.ModelSerializer): #si pones solo serializer.Serializer solo mostrara los campos definidos como user_Essay_PrePAES, no el del moldeo
-
     class Meta:
-        model = AnswerPrePAES
-        exclude = [*generic_fields]
-
+        model = Answer
+        exclude = [*generic_fields, 'users', 'essay']
+        
 #22-09-2023
 class SaveAnswerPrePAESSerializer(serializers.Serializer):
     answer_id = serializers.IntegerField()

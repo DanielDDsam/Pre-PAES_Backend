@@ -736,7 +736,7 @@ class UserPrePAESQuestionsListViews(generics.ListAPIView):
     def get_queryset(self):
         user = self.request.user  # Obtener el ID del usuario de los parámetros de la URL
         queryset = PrePAES.objects.filter(user = user).order_by('-created')
-        return queryset # Devolver los ensayos personalizados del usuario del tipo prePAES
+        return queryset # Devolver los ensayos prePAES del usuario
 
     def list(self, request):
         queryset = self.get_queryset()
@@ -748,16 +748,15 @@ class UserPrePAESQuestionsListViews(generics.ListAPIView):
             if(len(serializer.data['user_PrePAES']) != 0):
                 
                 data.append(serializer.data)
-                for j in range(len(data[indiceDatos]['user_PrePAES'])):
+                for j in range(len(data[indiceDatos]['user_answer'])):#se ocupa eñ estadp ya que úede haber más preguntas que respúestas, ya que puede llegar a obtener una nueva pero no la constesta
                     
-                    print(data[indiceDatos]['user_PrePAES'][j]['question_id'])
-                    querysetState = UserQuestionState.objects.filter(users = self.request.user, question_id = data[indiceDatos]['user_PrePAES'][j]['question_id']).order_by('-created')
-                    print(querysetState)
-                    serializerState = UserQuestionStateSerializer(querysetState[0])
-                    data[indiceDatos]['user_PrePAES'][j]['question_state'] = serializerState.data['state']
+                    print(data[indiceDatos])
+                    data[indiceDatos]['user_PrePAES'][j]['answer_state'] = data[indiceDatos]['user_answer'][j]['answer_state']
+                    data[indiceDatos]['user_PrePAES'][j]['answer_id'] = data[indiceDatos]['user_answer'][j]['answer_id']
 
+                    #print(data[indiceDatos])
+                data[indiceDatos].pop('user_answer')#quitamos el dato para un mejor oden para el frontend
                 indiceDatos += 1
-        
         return Response(data, status=status.HTTP_200_OK)
 
 class AnswerPrePAESView(generics.CreateAPIView): #22-09
@@ -775,14 +774,24 @@ class AnswerPrePAESView(generics.CreateAPIView): #22-09
             return Response({'message':'Respuesta guardada correctamente'},status=status.HTTP_201_CREATED)
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST) #si no cumple con las validaciones, ya sea que le falta un campo o ya exite lo mostrara
 
-
-
-class AnswerPrePAESSaveView(generics.ListAPIView): #obtiene todas las respuestas de una fase prePAES
-    permission_classes = [authenticate]
+class AnswerPrePAESListView(generics.ListAPIView): #obtiene todas las respuestas de una fase prePAES
+    permission_classes = [IsAuthenticated]
     serializer_class = AnswerPrePAESSerializer
 
-    def get_queryset(self, **kwargs):
-        user = self.request.user  #obtener al usuario
-        prePAES = self.kwargs['prePAES'] #obtener el fase actual de prePAES
-
-        return AnswerPrePAES.objects.filter(users=user,pre_PAES_id = prePAES)  # Devolver las
+    def get_queryset(self):
+        question = self.kwargs['question'] # Obtener el ID del usuario de los parámetros de la URL
+        queryset = Answer.objects.filter(questions_id = question)
+        return queryset # Devolver los ensayos prePAES del usuario
+    
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        data = []
+        for i in range(len(queryset)):
+            serializer = AnswerPrePAESSerializer(queryset[i])
+            data.append(serializer.data)
+        data.append(self.kwargs['question'])
+        return Response(data, status=status.HTTP_200_OK)
+     
+    
+   
+    

@@ -34,7 +34,7 @@ urlpatterns = [
     re_path(r'^answers/create/$', views.AnswerCreate.as_view()),#Endpoint para crear una respuesta
     re_path(r'^answers/(?P<pk>[0-9]+)/$', views.AnswerRetrieveUpdateDestroy.as_view()),#Endpoint para consultar, eliminar, actualizar una respuesta específica
 
-    re_path(r'^questions_alternativeSpecific/(?P<pk>[0-9]+)/$', views.questionAnswers.as_view()),#endpoint para consultar por un ensayo en especifico con todas sus  preguntas y alternativas
+    re_path(r'^questions_alternativeSpecific/(?P<pk>[0-9]+)/$', views.questionAnswers.as_view()),#endpoint para consultar por una pregunta y alternativas
     re_path(r'^question_oneQuestion/$', views.oneQuestion.as_view()),#endpoint para consultar una sola pregunta
     re_path(r'^question_oneQuestionRules/$', views.oneQuestionRules.as_view()),#endpoint para consultar una sola pregunta en base a las reglas establecidas
     
@@ -54,7 +54,9 @@ urlpatterns = [
     re_path(r'^PrePAES/create/$', views.PrePAESCreateView.as_view()),#Endpoint para crear ensayos prePAES
     re_path(r'^PrePAES_questions/$', views.UserPrePAESQuestionsListViews.as_view()),#Endpoint para obtener las pregunta que ha respondido de prePAES
     re_path(r'^question_oneQuestionRules_prePaes/$', views.oneQuestionRulesPrePaes.as_view()),#endpoint para consultar una sola pregunta en base a las reglas establecidas
-    re_path(r'^PrePAES_submit_answers/$', views.AnswerPrePAESView.as_view()),
+    re_path(r'^PrePAES_submit_answers/$', views.AnswerPrePAESView.as_view()),#guarda una respuesta del usuario para método prePAES
+    #para obtener las demas respuestas usar la url questions_alternativeSpecific
+    re_path(r'^PrePAES_answers/(?P<question>[0-9]+)/$', views.AnswerPrePAESListView.as_view()),#obtener la
 
     re_path(r'^best_average_score/(?P<pk>[0-9]+)/$', views.bestAverageScore.as_view()),#Endpoint para consultar el puntaje maximo y el promedio de puntajes de un usaurio
     re_path(r'^recent_essay/(?P<pk>[0-9]+)/$', views.CustomEssayMostRecentView.as_view()),#Endpoint para consultar el ensayo más reciente
