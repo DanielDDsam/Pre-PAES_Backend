@@ -52,9 +52,13 @@ urlpatterns = [
     re_path(r'^custom_essay_questions/$', views.CustomEssayQuestionView.as_view()),#Endpoint para asociar preguntas a un ensayo personalizado
 
     re_path(r'^PrePAES/create/$', views.PrePAESCreateView.as_view()),#Endpoint para crear ensayos prePAES
-    re_path(r'^PrePAES_questions/$', views.UserPrePAESQuestionsListViews.as_view()),#Endpoint para obtener las pregunta que ha respondido de prePAES
+    re_path(r'^PrePAES_questions/$', views.UserPrePAESQuestionsListViews.as_view()),#Endpoint para obtener todas las pregunta que ha respondido de prePAES
+    re_path(r'^PrePAES_questions/(?P<fase>[0-9]+)/$', views.UserPrePAESQuestionsListViews.as_view()),#Endpoint para obtener todas las pregunta que ha respondido de prePAES
     re_path(r'^question_oneQuestionRules_prePaes/$', views.oneQuestionRulesPrePaes.as_view()),#endpoint para consultar una sola pregunta en base a las reglas establecidas
     re_path(r'^PrePAES_submit_answers/$', views.AnswerPrePAESView.as_view()),#guarda una respuesta del usuario para método prePAES
+    re_path(r'^PrePAES_last_questions/(?P<question>[0-9]+)/$', views.oneQuestionDataListView.as_view()),#endpoint para consultar la ultima pregunta de una fase
+
+
     #para obtener las demas respuestas usar la url questions_alternativeSpecific
     re_path(r'^PrePAES_answers/(?P<question>[0-9]+)/$', views.AnswerPrePAESListView.as_view()),#obtener la
 

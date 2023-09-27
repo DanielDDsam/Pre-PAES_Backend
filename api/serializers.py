@@ -801,9 +801,23 @@ class PrePAESCreateSerializer(serializers.ModelSerializer): #si pones solo seria
     
     def create(self, validated_data):
         user = self.context['request'].user
-        nunero_fase = len(PrePAES.objects.filter(user = user)) #identifica en que fase se encuentra, si es el primero, parte en 0
-        prePAES_user = PrePAES.objects.create(user = user, number_phase = nunero_fase+1) #se suma en 1 siempre el numero de fase para ser mayor que el anterior
-        return prePAES_user
+        nunero_fase = PrePAES.objects.filter(user = user).count() #identifica en que fase se encuentra, si es el primero, parte en 0
+
+        if(nunero_fase == 0):
+            prePAES_user = PrePAES.objects.create(user = user, number_phase = 1) #se suma en 1 siempre el numero de fase para ser mayor que el anterior
+            return prePAES_user
+        else:
+            count = self.verifyCreation(user)
+            if(count < 10):#si la fase aun no se completa, entonces no crea nada
+                return True
+            #si ya se completo entonces se crea
+            prePAES_user = PrePAES.objects.create(user = user, number_phase = nunero_fase+1) #se suma en 1 siempre el numero de fase para ser mayor que el anterior
+            return prePAES_user
+    
+    def verifyCreation(self, user):
+        queryset = PrePAES.objects.filter(user = user).order_by('-created').first()#solo el primer coincidente
+        data = AnswerPrePAES.objects.filter(pre_PAES_id = queryset.id).count()#solo entrega la cuenta
+        return data
 
 #22-09-2023
 class AnswerPrePAESSerializer(serializers.ModelSerializer): #si pones solo serializer.Serializer solo mostrara los campos definidos como user_Essay_PrePAES, no el del moldeo
@@ -816,25 +830,19 @@ class SaveAnswerPrePAESSerializer(serializers.Serializer):
     answer_id = serializers.IntegerField()
 
     def create(self, data):
-        print(self.data)
+        
         answer = data.get('answer_id')
         user = self.context['request'].user
-        print(answer)
+        
         # Crear objetos AnswerEssayUser para la respuesta seleccionada
         answer = get_object_or_404(Answer, pk=answer)
-        print('hola')
-        print(answer)
-        prePAES = PrePAES.objects.filter(user=user).order_by('-created')
-        prePAES = prePAES[0]
-
-        print(prePAES)
+        prePAES = PrePAES.objects.filter(user=user).order_by('-created').first()
 
         if AnswerPrePAES.objects.filter(answers=answer, pre_PAES=prePAES, users=user).exists():
                 raise serializers.ValidationError('Ya existe una respuesta para esta combinación de AnswerPrePAES y Answer.')
         
         prePAES_answer = AnswerPrePAES.objects.create(answers=answer, pre_PAES=prePAES, users=user)
 
-        print(prePAES_answer)
         return prePAES_answer
 
 

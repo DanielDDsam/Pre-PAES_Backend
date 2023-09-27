@@ -735,10 +735,16 @@ class UserPrePAESQuestionsListViews(generics.ListAPIView):
 
     def get_queryset(self):
         user = self.request.user  # Obtener el ID del usuario de los parámetros de la URL
-        queryset = PrePAES.objects.filter(user = user).order_by('-created')
+        url_solicitada = self.request.path
+
+        if url_solicitada == '/PrePAES_questions/':
+            queryset = PrePAES.objects.filter(user = user).order_by('-created')
+        else:
+            fase = self.kwargs['fase']
+            queryset = PrePAES.objects.filter(user = user, number_phase = fase).order_by('-created')
         return queryset # Devolver los ensayos prePAES del usuario
 
-    def list(self, request):
+    def list(self, request, **kwargs):
         queryset = self.get_queryset()
         data = []
         indiceDatos = 0
@@ -791,7 +797,17 @@ class AnswerPrePAESListView(generics.ListAPIView): #obtiene todas las respuestas
             data.append(serializer.data)
         data.append(self.kwargs['question'])
         return Response(data, status=status.HTTP_200_OK)
-     
+
+class oneQuestionDataListView(generics.ListAPIView):
+    serializer_class = QuestionOneSerializer
+    filter_backends = [DjangoFilterBackend]
+    permission_classes = [IsAuthenticated]  # Clases de permisos requeridos para acceder a la vista
+
+    def get_queryset(self):
+        question = self.kwargs['question']
+        queryset = Question.objects.filter(id=question)#agregar el else
+        return queryset
+
     
    
     
