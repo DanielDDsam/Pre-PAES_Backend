@@ -522,9 +522,10 @@ class CustomEssayResponseSerializer(serializers.ModelSerializer):
         data = super().to_representation(instance)
         answers_list=[]
         answers = instance.answers_essay_user.filter(essays=instance)
+        
         for answer in answers:
             answers_list.append(answer.answers.id)
-        print(answers_list)
+      
         data['question'] = self.get_question(answers_list) #trae todos los datos a partir de las respuestas que se respondieron para un ensayo en especifico
         data['answered'] = answers_list #entrega el listado con las id de las respuestas para el ensayo
         data['score'] = self.get_score(instance)
@@ -546,78 +547,10 @@ class QuestionSerializerSpecific(serializers.ModelSerializer):
 
 #serializador que retornara las respuestas de las preguntas
 class QuestionAnswerSerializer(QuestionSerializerSpecific): #Heredar de QuestionSerializer
-
-        answer = AnswerSerializerSpecific(many=True, read_only=True) #instancia de las respuestas
-        #debe llamare igual que el related-name de la realcion 
-        #def to_representation(self, instance: Question):
-          #  data = super().to_representation(instance)#usara el metodo to respresentation de la clase QuestionSerializer para la instacia del modelo questions
-         #   essay = instance.essays
-           # data['essay'] = essay.id
-            #return data
+    answer = AnswerSerializerSpecific(many=True, read_only=True) #instancia de las respuestas
 
 class QuestionOneSerializer(QuestionSerializer):
     answer = AnswerSerializerSpecific(many=True, read_only=True)
-
-class UserQuestionStateSerializer(serializers.ModelSerializer): #18-07 este solo se usara para mostar los datos de esta tabla, ya que como tiene elementos de otras, lo idel es usar el de abajo para crearlos
-    class Meta:
-        model = UserQuestionState
-        fields = ['state','question_id','users_id']
-
-class SaveUserQuestionState(serializers.Serializer): #18-07
-    answer_id = serializers.IntegerField()
-
-    def validate(self, data):
-        answer_id = data.get('answer_id')
-
-        # Obtener el ensayo personalizado del usuario
-        # user_essay = get_object_or_404(CustomEssay, pk=user_essay_id)
-        # Filtrar las respuestas según los IDs proporcionados y verificar si pertenecen al ensayo del usuario
-        # answers = Answer.objects.filter(id__in=answer_ids, questions__essays__custom_essay=user_essay)
-
-        # # Comprobar si el número de IDs de respuesta coincide con el número de respuestas válidas
-        # if len(answer_ids) != len(answers):
-        #     raise serializers.ValidationError('Respuestas no válidas.')
-
-        return data
-    
-    def validarExistencia(self, question, user): #todo esto porque tiene daots de otras tablas, verificar si se puede hacer de otra manera
-        if UserQuestionState.objects.filter(question=question, users=user).exists():
-            return True
-        return False
-
-    def create(self, validated_data):
-        answer_id = validated_data.get('answer_id') #obtenemos el id de la respuesta
-   
-        # Obtener la respuesta que contesto el usuario, para luego obtener la pregunta
-        answer = get_object_or_404(Answer, pk=answer_id)
-        question = get_object_or_404(Question, pk=answer.questions_id)
-
-        #obtenemos el usuario
-        user = self.context['request'].user
-
-        
-        if self.validarExistencia(question, user) == True:
-            #instance = UserQuestionState.objects.filter(question=question, users=user)#obtenemos la instancia
-            instance = get_object_or_404(UserQuestionState, question=question, users=user) #si existe obtenemos la instancia
-            print(instance)
-            if answer.right == 0:
-                #instance.update(question=question, users=user,state='Reforzar')
-                #return instance
-                instance.state = 'Reforzar'
-                instance.save()#guardamos el cambio, esto permite modificar el campo update
-            else:
-                #instance.update(question=question, users=user,state='Correcta')
-                #return instance
-                instance.state = 'Correcta'
-                instance.save()#guardamos el cambio, esto permite modificar el campo update
-        else:#si no existe creamos una instancia
-            if answer.right == 0:
-                instance = UserQuestionState.objects.create(question=question, users=user,state='Reforzar')
-            else:
-                instance = UserQuestionState.objects.create(question=question, users=user,state='Correcta')
-        
-        
-        return instance
 
 ####################################
 #25-07
@@ -653,7 +586,6 @@ class UserEssayConfigSerializer(serializers.ModelSerializer):
         exclude = [*generic_fields]
     
     def validate(self, attrs):
-        
         user = self.context['request'].user
         number_user_config = UserEssayConfig.objects.filter(users=user).count()
 
@@ -664,9 +596,7 @@ class UserEssayConfigSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         user = self.context['request'].user
-        print(user)
         type_math_ids = validated_data.pop('type_math_ids', [])#sacamos los id de los tipos de ensayos de los datos validados
-        print(validated_data)
         user_config = UserEssayConfig.objects.create(**validated_data)  # Crear una instancia de la configuración con los datos validados
 
         # Crear objetos EssayAnswer asociados al CustomEssay creado
@@ -683,7 +613,6 @@ class UserEssayConfigSerializer(serializers.ModelSerializer):
         #updateConfig.essays.exclude(id__in=essay_ids).delete()
 
         # Crear o actualizar objetos UserEssayConfigTypes asociados al UserEssayConfig
-        print(updateConfig)
 
         if type_math_ids: #eliminamos sus configuraciones anteriores
             UserEssayConfigTypes.objects.filter(users_essasy_config=updateConfig).delete()#obtenemos primeros las instancias y las eliminamos
@@ -736,7 +665,6 @@ class UserBestEssayScore(serializers.ModelSerializer):
             
             #se retorna [ ] ya que None deja un error al intentar evaluarlo mediante if en la view
             return []
-
         
         return data
 
@@ -792,7 +720,7 @@ class PrePAESSaveQuestionSerializer(serializers.ModelSerializer): #modificado el
         return prePAES_user
 
 
-#21-09-2023
+#21/27-09-2023
 class PrePAESCreateSerializer(serializers.ModelSerializer): #si pones solo serializer.Serializer solo mostrara los campos definidos como user_Essay_PrePAES, no el del moldeo
 
     class Meta:
@@ -809,6 +737,7 @@ class PrePAESCreateSerializer(serializers.ModelSerializer): #si pones solo seria
         else:
             count = self.verifyCreation(user)
             if(count < 10):#si la fase aun no se completa, entonces no crea nada
+                #agregar raise error
                 return True
             #si ya se completo entonces se crea
             prePAES_user = PrePAES.objects.create(user = user, number_phase = nunero_fase+1) #se suma en 1 siempre el numero de fase para ser mayor que el anterior
@@ -845,5 +774,84 @@ class SaveAnswerPrePAESSerializer(serializers.Serializer):
 
         return prePAES_answer
 
-
+class UserQuestionStateSerializer(serializers.ModelSerializer): #18-07 este solo se usara para mostar los datos de esta tabla, ya que como tiene elementos de otras, lo idel es usar el de abajo para crearlos
+    question = QuestionSerializer
     
+    class Meta:
+        model = UserQuestionState
+        fields = ['state','question_id','users_id']
+
+class SaveUserQuestionState(serializers.Serializer): #18-07
+    answer_id = serializers.IntegerField()
+
+    def validate(self, data):
+        answer_id = data.get('answer_id')
+
+        # Obtener el ensayo personalizado del usuario
+        # user_essay = get_object_or_404(CustomEssay, pk=user_essay_id)
+        # Filtrar las respuestas según los IDs proporcionados y verificar si pertenecen al ensayo del usuario
+        # answers = Answer.objects.filter(id__in=answer_ids, questions__essays__custom_essay=user_essay)
+
+        # # Comprobar si el número de IDs de respuesta coincide con el número de respuestas válidas
+        # if len(answer_ids) != len(answers):
+        #     raise serializers.ValidationError('Respuestas no válidas.')
+
+        return data
+    
+    def validarExistencia(self, question, user): #todo esto porque tiene daots de otras tablas, verificar si se puede hacer de otra manera
+        if UserQuestionState.objects.filter(question=question, users=user).exists():
+            return True
+        return False
+
+    def create(self, validated_data):
+        answer_id = validated_data.get('answer_id') #obtenemos el id de la respuesta
+   
+        # Obtener la respuesta que contesto el usuario, para luego obtener la pregunta
+        answer = get_object_or_404(Answer, pk=answer_id)
+        question = get_object_or_404(Question, pk=answer.questions_id)
+
+        #obtenemos el usuario
+        user = self.context['request'].user
+
+        if self.validarExistencia(question, user) == True:
+            #instance = UserQuestionState.objects.filter(question=question, users=user)#obtenemos la instancia
+            instance = get_object_or_404(UserQuestionState, question=question, users=user) #si existe obtenemos la instancia
+            print(instance)
+            if answer.right == 0:
+
+                instance.state = 'Reforzar'
+                instance.save()#guardamos el cambio, esto permite modificar el campo update
+            else:
+                instance.state = 'Correcta'
+                instance.save()#guardamos el cambio, esto permite modificar el campo update
+        else:#si no existe creamos una instancia
+            if answer.right == 0:
+                instance = UserQuestionState.objects.create(question=question, users=user,state='Reforzar')
+            else:
+                instance = UserQuestionState.objects.create(question=question, users=user,state='Correcta')
+        return instance
+
+
+#28-09-2023
+class StadisticsPrePAESSerializer(serializers.ModelSerializer):
+
+    class meta:
+        model = UserQuestionState
+        exclude = [*generic_fields]
+    
+    """def to_representation(self, instance : UserQuestionState):
+        
+        data = super().to_representation(instance) #obtenemos la data cuando se llamara al serializador del llamado al serializador
+
+        data['category_most_error'] = self.get_category_most_error(instance)  # Incluir la categoria en la que se suele fallas más 
+        data['category_most_right'] = self.get_category_most_right(instance)  # Incluir la categoria en la que se suele acertar más
+
+        
+        # Verificar si hay registros en AnswerEssayUser para el CustomEssay actual
+        has_answer_essay_user = AnswerEssayUser.objects.filter(essays=instance).exists()
+        if not has_answer_essay_user:
+            
+            #se retorna [ ] ya que None deja un error al intentar evaluarlo mediante if en la view
+            return []
+        
+        return data"""
