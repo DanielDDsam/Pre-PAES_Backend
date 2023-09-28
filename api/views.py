@@ -714,6 +714,8 @@ class UserPrePAESQuestionsListViews(generics.ListAPIView):
                     #print(data[indiceDatos])
                 data[indiceDatos].pop('user_answer')#quitamos el dato para un mejor oden para el frontend
                 indiceDatos += 1
+        else:
+            data.append(serializer.data)
         return Response(data, status=status.HTTP_200_OK)
 
 class AnswerPrePAESView(generics.CreateAPIView): #22-09
@@ -760,6 +762,7 @@ class oneQuestionDataListView(generics.ListAPIView):
 class stadisticsPrePAESView(generics.ListAPIView):
     
     permission_classes = [IsAuthenticated]
-    serializer_class = AnswerPrePAESSerializer
+    serializer_class = StadisticsPrePAESSerializer
+    queryset = UserQuestionState.objects.filter().order_by('pk')
    
     

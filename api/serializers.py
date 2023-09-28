@@ -738,7 +738,7 @@ class PrePAESCreateSerializer(serializers.ModelSerializer): #si pones solo seria
             count = self.verifyCreation(user)
             if(count < 10):#si la fase aun no se completa, entonces no crea nada
                 #agregar raise error
-                return True
+                raise serializers.ValidationError('No se han completado todas las preguntas de la fase')
             #si ya se completo entonces se crea
             prePAES_user = PrePAES.objects.create(user = user, number_phase = nunero_fase+1) #se suma en 1 siempre el numero de fase para ser mayor que el anterior
             return prePAES_user
@@ -833,11 +833,19 @@ class SaveUserQuestionState(serializers.Serializer): #18-07
 
 
 #28-09-2023
-class StadisticsPrePAESSerializer(serializers.ModelSerializer):
+class questionTypeSerializer(serializers.ModelSerializer):
+    question_type_math = serializers.CharField(source='question.type_question')
 
-    class meta:
+    class Meta:
+        model = Question
+        fields = ['question_type_math']
+
+class StadisticsPrePAESSerializer(serializers.ModelSerializer):
+    question_type_math = questionTypeSerializer(many=True, read_only=True, source='user_question_state.question')
+
+    class Meta:
         model = UserQuestionState
-        exclude = [*generic_fields]
+        fields = ['questionType']
     
     """def to_representation(self, instance : UserQuestionState):
         

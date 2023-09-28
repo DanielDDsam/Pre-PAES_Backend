@@ -6,3 +6,4 @@ __pycache__/
 \_*.sh
 py
 .idea/
+settings.py
