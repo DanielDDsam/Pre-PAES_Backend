@@ -596,13 +596,13 @@ class PrePAESListExistView(generics.ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        queryset = PrePAES.objects.filter(user = user)
+        queryset = PrePAES.objects.filter(user = user).count()
         return queryset # Devolver los ensayos prePAES del usuario
 
     def list(self, request):
         # Note the use of `get_queryset()` instead of `self.queryset`
         queryset = self.get_queryset()
-        if len(queryset) == 0:
+        if queryset == 0:
             return Response(False)
         return Response(True)
 
