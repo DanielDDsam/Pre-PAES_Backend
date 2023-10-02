@@ -590,6 +590,22 @@ class PrePAESCreateView(generics.CreateAPIView):
     queryset = PrePAES.objects.filter(is_deleted=False)  # Consulta para obtener los ensayos personalizados que no han sido eliminados
     serializer_class = PrePAESCreateSerializer  # Clase serializadora utilizada
 
+class PrePAESListExistView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = PrePAESCreateSerializer  # Clase serializadora utilizada
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = PrePAES.objects.filter(user = user)
+        return queryset # Devolver los ensayos prePAES del usuario
+
+    def list(self, request):
+        # Note the use of `get_queryset()` instead of `self.queryset`
+        queryset = self.get_queryset()
+        if len(queryset) == 0:
+            return Response(False)
+        return Response(True)
+
 class oneQuestionRulesPrePaes(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = QuestionOneSerializer
@@ -756,13 +772,89 @@ class oneQuestionDataListView(generics.ListAPIView):
 
     def get_queryset(self):
         question = self.kwargs['question']
-        queryset = Question.objects.filter(id=question)#agregar el else
+        queryset = Question.objects.filter(id=question)
         return queryset
 
 class stadisticsPrePAESView(generics.ListAPIView):
     
     permission_classes = [IsAuthenticated]
     serializer_class = StadisticsPrePAESSerializer
-    queryset = UserQuestionState.objects.filter().order_by('pk')
-   
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = UserQuestionState.objects.filter(users = user)
+        return queryset
+    
+    def stateMAX(self, serializer):
+        claves = {"Reforzar": {}, "Correcta": {}}
+
+        for data in serializer.data:
+            state = data["state"]# Reforzar o Correcta desde los datos de la base de datos
+            subject = data["subject"]
+            
+            if subject not in claves[state]:
+                claves[state][subject] = 1
+            else:
+                claves[state][subject] += 1 #para caba subject suma +1 si aparece
+
+        most_common_subjects = {
+            state: max(claves[state], key=claves[state].get) #la funcion max en base a los estados, identifica mediante la obtencion de get cual es el que más se repite
+            for state in claves #iteramos en la claves proporcionado este caso reforzar y Correcta
+        }
+
+        return most_common_subjects
+    
+    def stateDificult(self, serializer):
+
+        claves = {"probabilidades": {}, "algebra": {}, "geometria": {}, "numeros": {}}
+
+        for data in serializer.data:
+            state = data["state"]# Reforzar o Correcta desde los datos de la base de datos
+            subject = data["subject"]
+            
+            if state not in claves[subject]:
+                claves[subject][state] = 1
+            else:
+                claves[subject][state] += 1 #para caba subject suma +1 si aparece
+
+        most_common_state = {
+            subject: {state: count for state, count in claves[subject].items()}
+            for subject in claves #iteramos en la claves proporcionado este caso reforzar y Correcta
+        }
+
+        return most_common_state
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.serializer_class(queryset, many=True)
+        most_common_subjects = self.stateMAX(serializer)
+        most_common_state = self.stateDificult(serializer)
+        dificult_subjects = {}
+        j = 0
+        for i in most_common_state:
+            
+            reforzar = most_common_state[i].get('Reforzar')
+            correcta = most_common_state[i].get('Correcta')
+            keys = list(most_common_state.keys())
+            print(keys[j])
+            print(j)
+
+            if reforzar is None:
+                dificult_subjects[keys[j]] = 'Dificil'
+            elif correcta is None:
+                dificult_subjects[keys[j]] = 'Facil'
+            else:
+                if reforzar > correcta:
+                    dificult_subjects[keys[j]] = 'Facil'
+                if reforzar < correcta:
+                    dificult_subjects[keys[j]] = 'Dificil'
+                if reforzar == correcta:
+                    dificult_subjects[keys[j]] = 'Intermedio'        
+               
+        data = []
+        data.append(most_common_subjects)
+        data.append(most_common_state)
+        data.append(dificult_subjects)
+
+        return Response(data, status=status.HTTP_200_OK)
     

@@ -787,15 +787,6 @@ class SaveUserQuestionState(serializers.Serializer): #18-07
     def validate(self, data):
         answer_id = data.get('answer_id')
 
-        # Obtener el ensayo personalizado del usuario
-        # user_essay = get_object_or_404(CustomEssay, pk=user_essay_id)
-        # Filtrar las respuestas según los IDs proporcionados y verificar si pertenecen al ensayo del usuario
-        # answers = Answer.objects.filter(id__in=answer_ids, questions__essays__custom_essay=user_essay)
-
-        # # Comprobar si el número de IDs de respuesta coincide con el número de respuestas válidas
-        # if len(answer_ids) != len(answers):
-        #     raise serializers.ValidationError('Respuestas no válidas.')
-
         return data
     
     def validarExistencia(self, question, user): #todo esto porque tiene daots de otras tablas, verificar si se puede hacer de otra manera
@@ -834,32 +825,22 @@ class SaveUserQuestionState(serializers.Serializer): #18-07
 
 #28-09-2023
 class questionTypeSerializer(serializers.ModelSerializer):
-    question_type_math = serializers.CharField(source='question.type_question')
 
     class Meta:
         model = Question
-        fields = ['question_type_math']
+        fields = ['subject']
 
 class StadisticsPrePAESSerializer(serializers.ModelSerializer):
-    question_type_math = questionTypeSerializer(many=True, read_only=True, source='user_question_state.question')
-
+    question = questionTypeSerializer()#de esta manera si la tabla posee llaves foraneas como campos
+    
     class Meta:
         model = UserQuestionState
-        fields = ['questionType']
+        fields = ['question','state']
     
-    """def to_representation(self, instance : UserQuestionState):
+    def to_representation(self, instance : UserQuestionState):
         
         data = super().to_representation(instance) #obtenemos la data cuando se llamara al serializador del llamado al serializador
+        data['subject'] = data['question']['subject']  # Incluir el tiempo empleado en el ensayo en la representación
+        data.pop('question') 
 
-        data['category_most_error'] = self.get_category_most_error(instance)  # Incluir la categoria en la que se suele fallas más 
-        data['category_most_right'] = self.get_category_most_right(instance)  # Incluir la categoria en la que se suele acertar más
-
-        
-        # Verificar si hay registros en AnswerEssayUser para el CustomEssay actual
-        has_answer_essay_user = AnswerEssayUser.objects.filter(essays=instance).exists()
-        if not has_answer_essay_user:
-            
-            #se retorna [ ] ya que None deja un error al intentar evaluarlo mediante if en la view
-            return []
-        
-        return data"""
+        return data

@@ -1111,7 +1111,7 @@ dataAlgebra = [
                 'question':
                 "Considera la ecuación [(x -3)(x - 4) = 2].[\\newline]¿Cuál de los siguientes argumentos es válido?",
                 'subject': "algebra",
-                'link_resolution': "https://www.youtube.com/embed/3-qEJz0wATs?start=1083",
+                'link_resolution': "https://www.youtube.com/embed/3-qEJz0wATs?start=1227",
                 'answer': [
                     {
                         'label':

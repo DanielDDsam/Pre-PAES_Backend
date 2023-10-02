@@ -51,6 +51,7 @@ urlpatterns = [
     re_path(r'^custom_essays/$', views.CustomEssayView.as_view()),#Endpoint para consultar y crear ensayos personalizados
     re_path(r'^custom_essay_questions/$', views.CustomEssayQuestionView.as_view()),#Endpoint para asociar preguntas a un ensayo personalizado
 
+    re_path(r'^PrePAES/verify/$', views.PrePAESListExistView.as_view()),#Endpoint para crear ensayos prePAES
     re_path(r'^PrePAES/create/$', views.PrePAESCreateView.as_view()),#Endpoint para crear ensayos prePAES
     re_path(r'^PrePAES_questions_state/$', views.UserPrePAESQuestionsListViews.as_view()),#Endpoint para obtener todas las pregunta que ha respondido de prePAES
     re_path(r'^PrePAES_questions_state/(?P<fase>[0-9]+)/$', views.UserPrePAESQuestionsListViews.as_view()),#Endpoint para obtener todas las pregunta que ha respondido de prePAES en una fase
