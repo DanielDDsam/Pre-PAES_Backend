@@ -63,6 +63,7 @@ class LoginView(APIView):
         email = serializer.data.get('email')  # Obtiene el email del usuario del serializador
         password = serializer.data.get('password')  # Obtiene la contraseña del usuario del serializadorprint(user)
         user = authenticate(email=email, password=password)  # Autentica al usuario utilizando el email y la contraseña
+        #user devuelve el objeto user
         if user is not None:
             token = get_tokens_for_user(user)  # Obtiene el token de acceso para el usuario autenticado
 
@@ -133,6 +134,7 @@ class UserPasswordResetView(APIView):
         serializer.is_valid(raise_exception=True)  # Valida los datos y lanza una excepción si no son válidos
         return Response({'msg':'Cambio de contraseña exitoso'}, status=status.HTTP_200_OK)  # Retorna un mensaje de éxito en la respuesta
 
+#################################################################################################################################################################################################
 
 class EssayList(generics.ListAPIView):
     permission_classes = [IsAuthenticated]  # Clases de permisos requeridos para acceder a la vista
@@ -249,7 +251,7 @@ class CustomEssayResponseView(generics.RetrieveUpdateDestroyAPIView):
     queryset = CustomEssay.objects.filter(is_deleted=False)
     serializer_class = CustomEssayResponseSerializer
 
-#######################################################################################
+#################################################################################################################################################################################################
 class questionAnswers(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = QuestionAnswerSerializer
@@ -266,28 +268,17 @@ class oneQuestion(generics.ListAPIView):
     permission_classes = [IsAuthenticated]  # Clases de permisos requeridos para acceder a la vista
 
     def get_queryset(self):
-        #data = self.request.data.get('ids_a_evitar', [])
-        #data = [int(id) for id in data if id.isdigit()]  # Convertir a enteros solo los elementos numéricos
-        #queryset = Question.objects.filter(id = question_pk)
-        #print(data)
-        #UserQuestionState_ids = UserQuestionState.objects.values_list('id', flat=True) #agregar el usuario a que hace referencia
-        #  
-        user = self.request.user
-        print(user.id)
+        user = self.request.user #obtenemos al usuario
         UserQuestionState_ids = UserQuestionState.objects.filter(users_id = user.id).values_list('id', flat=True) #agregar el usuario a que hace referencia 
-        print('user question')
-        print(UserQuestionState_ids)
-
+       
         if UserQuestionState_ids:
-            queryset = Question.objects.all().exclude(id__in=UserQuestionState_ids).order_by('?') #agregar el else
-            #print(queryset.first())
+            queryset = Question.objects.all().exclude(id__in=UserQuestionState_ids).order_by('?').first() #agregar el else
         else:
-            queryset = Question.objects.all().order_by('?')
+            queryset = Question.objects.all().order_by('?').first()
         return queryset
 
     def list(self, request):
-        # Note the use of `get_queryset()` instead of `self.queryset`
-        queryset = self.get_queryset().first()
+        queryset = self.get_queryset()
         serializer = QuestionOneSerializer(queryset) 
         return Response(serializer.data)
 
@@ -304,106 +295,18 @@ class oneQuestionRules(generics.ListAPIView):
         
         if pregunta == 'nueva':
             if UserQuestionState_ids:#vemos si ya contesto alguna pregunta
-                queryset = Question.objects.all().exclude(id__in=UserQuestionState_ids).order_by('?') #sacamos una pregunta que no este entre las ya contestadas
-                #print(queryset.first())
+                queryset = Question.objects.all().exclude(id__in=UserQuestionState_ids).order_by('?').first() #sacamos una pregunta que no este entre las ya contestadas
             else:
-                queryset = Question.objects.all().order_by('?')
+                queryset = Question.objects.all().order_by('?').first()#sacamos una pregunta aleatoria
         else:
-            queryset = Question.objects.filter(id=pregunta.question_id) #si la pregunta no es nueva, es reforzar o correcta la obtenemos 
+            queryset = Question.objects.filter(id=pregunta.question_id).first() #si la pregunta no es nueva, es reforzar o correcta la obtenemos 
         return queryset
 
     def list(self, request):
         # Note the use of `get_queryset()` instead of `self.queryset`
-        print('queryset')
-        queryset = self.get_queryset().first()
+        queryset = self.get_queryset()
         serializer = QuestionOneSerializer(queryset) 
-        print(queryset)
         return Response(serializer.data)
-    
-    def obtener_pregunta(self, user):
-    # Contadores de preguntas correctas y reforzar
-        create_data = UserQuestionState.objects.filter(users_id = user.id).order_by('created') #obtemos las preguntas ordenadas por orden de creación
-        update_data = UserQuestionState.objects.filter(users_id = user.id).order_by('updated') #obtemos las preguntas ordenadas por orden de modificacion 
-        allquestions = UserQuestionState.objects.filter(users_id = user.id) #las obtenemos todas
- 
-        todos_los_elementos = list(create_data)[-2:] + list(update_data)[-2:] #obtenemos las 2 ultimas creadas y modificadoas
-        todos_los_elementos.sort(key=lambda x: x.created if x.created else x.updated, reverse=True) #se ordena por la fecha mas actual primero para ver las utimas 2 contestadas
-        questionState = []
-        questionState.extend(todos_los_elementos)
-        
-        for i in range(len(todos_los_elementos)): #eliminamos las preguntas repetidas
-            
-            if(i == 0):
-                if (todos_los_elementos[i] == todos_los_elementos[i+1]): #si la primera pregunta tambien es la segunda entonces eliminamos la segunda
-                    del questionState[i+1]
-            else:
-                if (todos_los_elementos[0] == todos_los_elementos[i]): 
-                    del questionState[i]
-        #en resumen dejamos las 2 preguntas contestadas recientemente, verificando que no sean las mismas
-
-        print(questionState)
-
-        preguntas_correctas = sum(1 for pregunta in allquestions if pregunta.state == 'Correcta')
-        preguntas_erroneas = sum(1 for pregunta in allquestions if pregunta.state == 'Reforzar')
-        print("Preguntas correctas:", preguntas_correctas)
-        print("Preguntas para reforzar:", preguntas_erroneas)
-
-        # Verificar si se han respondido al menos 3 preguntas erróneas y 3 preguntas para reforzar
-        if preguntas_correctas + preguntas_erroneas >= 6:
-            # Obtener las últimas 2 respuestas del usuario
-
-            ultimas_respuestas = [pregunta.state for pregunta in questionState[-2:]]
-            # Probabilidad de cambiar una pregunta "correcta" a "reforzar" o "nueva"
-            if ultimas_respuestas == ['Correcta', 'Correcta'] and random.random() < 0.7:
-                # Cambiar una pregunta "correcta" a "reforzar"
-                preguntas_erroneas_list = [pregunta for pregunta in allquestions if pregunta.state == 'Reforzar']
-                pregunta_seleccionada = random.choice(preguntas_erroneas_list)
-                pass
-            elif ultimas_respuestas == ['Reforzar', 'Reforzar'] and random.random() < 0.7:
-                # Cambiar una pregunta "errónea" a "correcta"
-                preguntas_correctas_list = [pregunta for pregunta in allquestions if pregunta.state == 'Correcta']
-                pregunta_seleccionada = random.choice(preguntas_correctas_list)
-                pass
-            else:
-                # Indicar que la pregunta debe ser nueva
-                return 'nueva'
-        else:
-            # Indicar que la pregunta debe ser nueva
-            return 'nueva'
-        #print(pregunta_seleccionada.id)
-        return pregunta_seleccionada
-
-class oneQuestionRulesPrePaes(generics.ListAPIView):
-    permission_classes = [IsAuthenticated]
-    serializer_class = QuestionOneSerializer
-    filter_backends = [DjangoFilterBackend]
-
-    def get_queryset(self):
-
-        user = self.request.user#obtenemos el usuario actual 
-        UserQuestionState_ids = UserQuestionState.objects.filter(users_id = user.id).values_list('id', flat=True) #obtenemos los ids de las preguntas contestadas 
-        pregunta = self.obtener_pregunta(user)#pasamos el usuario para obtener una pregunta
-        
-        if pregunta == 'nueva':
-            if UserQuestionState_ids:#vemos si ya contesto alguna pregunta
-                queryset = Question.objects.all().exclude(id__in=UserQuestionState_ids).order_by('?') #sacamos una pregunta que no este entre las ya contestadas
-                #print(queryset.first())
-            else:
-                queryset = Question.objects.all().order_by('?')
-        else:
-            queryset = Question.objects.filter(id=pregunta.question_id) #si la pregunta no es nueva, es reforzar o correcta la obtenemos 
-        return queryset
-
-    def list(self, request):
-        # Note the use of `get_queryset()` instead of `self.queryset`
-        print('queryset')
-        queryset = self.get_queryset().first()
-        serializer = QuestionOneSerializer(queryset) 
-        print(queryset)
-        return Response(serializer.data)
-    
-    def save_obtain_question(self,request):#aqui cristian soy tu yo del pasado, recuerda que aqui va pregunta obtenida, ya que en el metodo pre-paes se puede salir sin problemas, por lo tanto debemos guardarla pasa así saber de donde retornarla 17_08
-        pass
     
     def obtener_pregunta(self, user):
     # Contadores de preguntas correctas y reforzar
@@ -460,15 +363,13 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
 
 class SaveOneAnswer(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
-    #permission_classes = (IsAuthenticated,)  # Permiso requerido para acceder a la vista
     serializer_class = SaveAnswerSerializer  # Clase serializadora utilizada
 
     def create(self, request, *args, **kwargs): 
         answer_serializer = self.serializer_class(data = request.data, context={'request': request})
-        #print(answer_serializer)
+
         if answer_serializer.is_valid():
             answer_serializer.save()  # Guardar los datos
-
             return Response({'message': 'CREATED'}, status=status.HTTP_201_CREATED)  # Devolver una respuesta exitosa
         else:
             answer_serializer.is_valid(raise_exception=True)
@@ -480,28 +381,14 @@ class SaveUserQuestion(generics.CreateAPIView):
 
     def create(self, request, *args, **kwargs): 
         question_user_serializer = self.serializer_class(data=request.data, context={'request': request}) 
+
         if question_user_serializer.is_valid():
             question_user_serializer.save()  # Guardar los datos
             return Response({'message': 'CREATED'}, status=status.HTTP_201_CREATED)  # Devolver una respuesta exitosa
         else:
             question_user_serializer.is_valid(raise_exception=True)
 
-    
-    #def create_or_update(self, request): #definir comportamiento update delete
-     #   question_user_serializer = SaveUserQuestionState(data = request.data, context={'request': request})
-      #  question_user_serializer.is_valid()
-       # question_user_serializer.save()
-        #serializer_data = question_user_serializer.data
-        
-        # Acceder al valor de "exist"
-        #exist_value = serializer_data.get('exist',False)
-        #print(exist_value)
-        ##
-    
-        #question_user_serializer.is_valid()
-        
-        #print("state")
-        #print(question_user_serializer)
+#######################################################################################################################################################################################
 
 #25-07 para guardar la configuración
 class UserEssayConfigCreate(generics.CreateAPIView):
@@ -606,19 +493,10 @@ class bestAverageScore(generics.ListAPIView):
     
     def list(self, request, pk):
         product_serializer = self.get_serializer(self.get_queryset(), many = True)
-
-        #data = self.functionEssays(self.get_queryset())
-
-        #if data == 0:
-         #   return Response({'message':'No hay ensayos realizados por el usuario'}, status=status.HTTP_204_NO_CONTENT)
-        #else:
         bestScore = self.hig_score(product_serializer.data)
         average = self.average_score(product_serializer.data)
-        print(bestScore)
-        print(average)
         return Response({'bestScore':bestScore,'average':average}, status=status.HTTP_200_OK)
-        #return Response({'bestScore':bestScore,'average':average, 'data':data}, status=status.HTTP_200_OK)
-    
+        #return Response({'bestScore':bestScore,'average':average, 'data':data}, status=status.HTTP_200_OK) #este retorna todo junto
     
     def hig_score(self, data):
         score = 0
@@ -646,7 +524,6 @@ class bestAverageScore(generics.ListAPIView):
         return 0
     
     def functionEssays(self, queryset):
-
         data = []
         error = {}
         count = 0
@@ -677,8 +554,7 @@ class CustomEssayMostRecentView(generics.ListAPIView):
         for i in range(len(queryset)):
             serializer = UserBestEssayScore(queryset[i])
             if len(serializer.data) != 0: #si el largo es 0 quiere decir que es un ensayo sin respuestas  
-        
-                return Response(serializer.data, status=status.HTTP_200_OK)
+                return Response(serializer.data, status=status.HTTP_200_OK)#retoramos el primero ya que es el más reciente
         return Response({'message':'No hay ensayos realizados por el usuario'}, status=status.HTTP_204_NO_CONTENT)
 
 class CustomEssayMostRecentResumeView(generics.ListAPIView):
@@ -705,5 +581,283 @@ class CustomEssayMostRecentResumeView(generics.ListAPIView):
         
         if count == 0:
             return Response({'message':'No hay ensayos realizados por el usuario'}, status=status.HTTP_204_NO_CONTENT)
+        return Response(data, status=status.HTTP_200_OK)
+
+##################################################################################################################################################################################################################################################
+
+class PrePAESCreateView(generics.CreateAPIView):
+    permission_classes = [IsAuthenticated]
+    queryset = PrePAES.objects.filter(is_deleted=False)  # Consulta para obtener los ensayos personalizados que no han sido eliminados
+    serializer_class = PrePAESCreateSerializer  # Clase serializadora utilizada
+
+class PrePAESListExistView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = PrePAESCreateSerializer  # Clase serializadora utilizada
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = PrePAES.objects.filter(user = user).count()
+        return queryset # Devolver los ensayos prePAES del usuario
+
+    def list(self, request):
+        # Note the use of `get_queryset()` instead of `self.queryset`
+        queryset = self.get_queryset()
+        if queryset == 0:
+            return Response(False)
+        return Response(True)
+
+class oneQuestionRulesPrePaes(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = QuestionOneSerializer
+    filter_backends = [DjangoFilterBackend]
+
+    def get_queryset(self):
+        user = self.request.user#obtenemos el usuario actual 
+        UserQuestionState_ids = UserQuestionState.objects.filter(users_id = user.id).values_list('id', flat=True) #obtenemos los ids de las preguntas contestadas 
+        pregunta = self.obtener_pregunta(user)#pasamos el usuario para obtener una pregunta
+        
+        if pregunta == 'nueva':
+            if UserQuestionState_ids:#vemos si ya contesto alguna pregunta
+                queryset = Question.objects.all().exclude(id__in=UserQuestionState_ids).order_by('?').first() #sacamos una pregunta que no este entre las ya contestadas
+            else:
+                queryset = Question.objects.all().order_by('?').first()
+        else:
+            queryset = Question.objects.filter(id=pregunta.question_id).first() #si la pregunta no es nueva, es reforzar o correcta la obtenemos 
+
+        return queryset
+
+    def list(self, request):
+        # Note the use of `get_queryset()` instead of `self.queryset`
+        queryset = self.get_queryset()
+        serializer = QuestionOneSerializer(queryset) 
+        self.save_obtain_question(serializer.data)
+        return Response(serializer.data)
+
+    #21-09
+    def save_obtain_question(self,questionData):#aqui cristian soy tu yo del pasado, recuerda que aqui va pregunta obtenida, ya que en el metodo pre-paes se puede salir sin problemas, por lo tanto debemos guardarla pasa así saber de donde retornarla 17_08
+        user = self.request.user#obtenemos el usuario actual 
+
+        # obtener el id del ultimo ensayo prePAES
+        queryset = PrePAES.objects.filter(user = user).order_by('-created').first()
+        essaySerializer = PrePAESCreateSerializer(queryset)
+    
+        #Guardamos la convinación de la fase de prePAES y la pregunta
+        serializer = PrePAESSaveQuestionSerializer(data={'pre_PAES':essaySerializer.data['id'],'question':questionData['id']}) 
+        serializer.is_valid()
+        serializer.save()
+    
+        return True
+    
+    def obtener_pregunta(self, user):
+    # Contadores de preguntas correctas y reforzar
+        create_data = UserQuestionState.objects.filter(users_id = user.id).order_by('created')[:2] #obtemos las preguntas ordenadas por orden de creación
+        update_data = UserQuestionState.objects.filter(users_id = user.id).order_by('updated')[:2] #obtemos las preguntas ordenadas por orden de modificacion 
+        allquestions = UserQuestionState.objects.filter(users_id = user.id) #las obtenemos todas
+ 
+        todos_los_elementos = list(create_data) + list(update_data) #obtenemos las 2 ultimas creadas y modificadoas
+        todos_los_elementos.sort(key=lambda x: x.created if x.created else x.updated, reverse=True) #se ordena por la fecha mas actual primero para ver las utimas 2 contestadas
+        questionState = []
+        questionState.extend(todos_los_elementos)
+
+        if (todos_los_elementos[0] == todos_los_elementos[1] and (len(todos_los_elementos) == 2)):
+            del questionState[1]
+        else:
+            for i in range(len(todos_los_elementos)): #eliminamos las preguntas repetidas
+            
+                if(i == 0):
+                    if (todos_los_elementos[i] == todos_los_elementos[i+1]): #si la primera pregunta tambien es la segunda entonces eliminamos la segunda
+                        del questionState[i+1]
+                else:
+                    if (todos_los_elementos[0] == todos_los_elementos[i]): 
+                        del questionState[i]
+        #en resumen dejamos las 2 preguntas contestadas recientemente, verificando que no sean las mismas
+
+        preguntas_correctas = sum(1 for pregunta in allquestions if pregunta.state == 'Correcta')
+        preguntas_erroneas = sum(1 for pregunta in allquestions if pregunta.state == 'Reforzar')
+
+        # Verificar si se han respondido al menos 3 preguntas erróneas y 3 preguntas para reforzar
+        if preguntas_correctas + preguntas_erroneas >= 6:
+            # Obtener las últimas 2 respuestas del usuario
+
+            ultimas_respuestas = [pregunta.state for pregunta in questionState[-2:]]
+            # Probabilidad de cambiar una pregunta "correcta" a "reforzar" o "nueva"
+            if ultimas_respuestas == ['Correcta', 'Correcta'] and random.random() < 0.7:
+                # Cambiar una pregunta "correcta" a "reforzar"
+                preguntas_erroneas_list = [pregunta for pregunta in allquestions if pregunta.state == 'Reforzar']
+                pregunta_seleccionada = random.choice(preguntas_erroneas_list)
+                pass
+            elif ultimas_respuestas == ['Reforzar', 'Reforzar'] and random.random() < 0.7:
+                # Cambiar una pregunta "errónea" a "correcta"
+                preguntas_correctas_list = [pregunta for pregunta in allquestions if pregunta.state == 'Correcta']
+                pregunta_seleccionada = random.choice(preguntas_correctas_list)
+                pass
+            else:
+                # Indicar que la pregunta debe ser nueva
+                return 'nueva'
+        else:
+            # Indicar que la pregunta debe ser nueva
+            return 'nueva'
+        #print(pregunta_seleccionada.id)
+        return pregunta_seleccionada
+
+class UserPrePAESQuestionsListViews(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserPrePAESData  # Clase serializadora utilizada
+
+    def get_queryset(self):
+        user = self.request.user  # Obtener el ID del usuario de los parámetros de la URL
+        url_solicitada = self.request.path
+
+        if url_solicitada == '/PrePAES_questions_state/':
+            queryset = PrePAES.objects.filter(user = user).order_by('-created').first()
+        else:
+            fase = self.kwargs['fase']
+            queryset = PrePAES.objects.filter(user = user, number_phase = fase).order_by('-created').first()
+        return queryset # Devolver los ensayos prePAES del usuario
+
+    def list(self, request, **kwargs):
+        queryset = self.get_queryset()
+        data = []
+        indiceDatos = 0
+        serializer = UserPrePAESData(queryset)
+
+        if(len(serializer.data['user_PrePAES']) != 0):
+                
+                data.append(serializer.data)
+                for j in range(len(data[indiceDatos]['user_answer'])):#se ocupa eñ estadp ya que úede haber más preguntas que respúestas, ya que puede llegar a obtener una nueva pero no la constesta
+                    
+                    print(data[indiceDatos])
+                    data[indiceDatos]['user_PrePAES'][j]['answer_state'] = data[indiceDatos]['user_answer'][j]['answer_state']
+                    data[indiceDatos]['user_PrePAES'][j]['answer_id'] = data[indiceDatos]['user_answer'][j]['answer_id']
+
+                    #print(data[indiceDatos])
+                data[indiceDatos].pop('user_answer')#quitamos el dato para un mejor oden para el frontend
+                indiceDatos += 1
+        else:
+            data.append(serializer.data)
+        return Response(data, status=status.HTTP_200_OK)
+
+class AnswerPrePAESView(generics.CreateAPIView): #22-09
+    permission_classes = [IsAuthenticated]
+    queryset = AnswerPrePAES.objects.filter().order_by('pk')
+    serializer_class = SaveAnswerPrePAESSerializer
+
+    def post(self, request): #lo mismo que hicimos en apy.py de users, se usa post ya que es un apiview
+        serializer = self.serializer_class(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            
+            serializer.save()#guarda los datos en la base de datos, si se quiere dar cierta forma consultar este link https://www.django-rest-framework.org/tutorial/1-serialization/
+            return Response({'message':'Respuesta guardada correctamente'},status=status.HTTP_201_CREATED)
+        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST) #si no cumple con las validaciones, ya sea que le falta un campo o ya exite lo mostrara
+
+class AnswerPrePAESListView(generics.ListAPIView): #obtiene todas las respuestas de una fase prePAES
+    permission_classes = [IsAuthenticated]
+    serializer_class = AnswerPrePAESSerializer
+
+    def get_queryset(self):
+        question = self.kwargs['question'] # Obtener el ID del usuario de los parámetros de la URL
+        queryset = Answer.objects.filter(questions_id = question)
+        return queryset # Devolver los ensayos prePAES del usuario
+    
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        data = []
+        for i in range(len(queryset)):
+            serializer = AnswerPrePAESSerializer(queryset[i])
+            data.append(serializer.data)
+        data.append(self.kwargs['question'])
+        return Response(data, status=status.HTTP_200_OK)
+
+class oneQuestionDataListView(generics.ListAPIView):
+    serializer_class = QuestionOneSerializer
+    filter_backends = [DjangoFilterBackend]
+    permission_classes = [IsAuthenticated]  # Clases de permisos requeridos para acceder a la vista
+
+    def get_queryset(self):
+        question = self.kwargs['question']
+        queryset = Question.objects.filter(id=question)
+        return queryset
+
+class stadisticsPrePAESView(generics.ListAPIView):
+    
+    permission_classes = [IsAuthenticated]
+    serializer_class = StadisticsPrePAESSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = UserQuestionState.objects.filter(users = user)
+        return queryset
+    
+    def stateMAX(self, serializer):
+        claves = {"Reforzar": {}, "Correcta": {}}
+
+        for data in serializer.data:
+            state = data["state"]# Reforzar o Correcta desde los datos de la base de datos
+            subject = data["subject"]
+            
+            if subject not in claves[state]:
+                claves[state][subject] = 1
+            else:
+                claves[state][subject] += 1 #para caba subject suma +1 si aparece
+
+        most_common_subjects = {
+            state: max(claves[state], key=claves[state].get) #la funcion max en base a los estados, identifica mediante la obtencion de get cual es el que más se repite
+            for state in claves #iteramos en la claves proporcionado este caso reforzar y Correcta
+        }
+
+        return most_common_subjects
+    
+    def stateDificult(self, serializer):
+
+        claves = {"probabilidades": {}, "algebra": {}, "geometria": {}, "numeros": {}}
+
+        for data in serializer.data:
+            state = data["state"]# Reforzar o Correcta desde los datos de la base de datos
+            subject = data["subject"]
+            
+            if state not in claves[subject]:
+                claves[subject][state] = 1
+            else:
+                claves[subject][state] += 1 #para caba subject suma +1 si aparece
+
+        most_common_state = {
+            subject: {state: count for state, count in claves[subject].items()}
+            for subject in claves #iteramos en la claves proporcionado este caso reforzar y Correcta
+        }
+
+        return most_common_state
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.serializer_class(queryset, many=True)
+        most_common_subjects = self.stateMAX(serializer)
+        most_common_state = self.stateDificult(serializer)
+        dificult_subjects = {}
+        j = 0
+        for i in most_common_state:
+            
+            reforzar = most_common_state[i].get('Reforzar')
+            correcta = most_common_state[i].get('Correcta')
+            keys = list(most_common_state.keys())
+            print(keys[j])
+            print(j)
+
+            if reforzar is None:
+                dificult_subjects[keys[j]] = 'Dificil'
+            elif correcta is None:
+                dificult_subjects[keys[j]] = 'Facil'
+            else:
+                if reforzar > correcta:
+                    dificult_subjects[keys[j]] = 'Facil'
+                if reforzar < correcta:
+                    dificult_subjects[keys[j]] = 'Dificil'
+                if reforzar == correcta:
+                    dificult_subjects[keys[j]] = 'Intermedio'        
+               
+        data = []
+        data.append(most_common_subjects)
+        data.append(most_common_state)
+        data.append(dificult_subjects)
+
         return Response(data, status=status.HTTP_200_OK)
     

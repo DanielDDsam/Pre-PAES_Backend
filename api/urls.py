@@ -34,26 +34,40 @@ urlpatterns = [
     re_path(r'^answers/create/$', views.AnswerCreate.as_view()),#Endpoint para crear una respuesta
     re_path(r'^answers/(?P<pk>[0-9]+)/$', views.AnswerRetrieveUpdateDestroy.as_view()),#Endpoint para consultar, eliminar, actualizar una respuesta específica
 
-    re_path(r'^questions_alternativeSpecific/(?P<pk>[0-9]+)/$', views.questionAnswers.as_view()),#endpoint para consultar por un ensayo en especifico con todas sus  preguntas y alternativas
+    re_path(r'^questions_alternativeSpecific/(?P<pk>[0-9]+)/$', views.questionAnswers.as_view()),#endpoint para consultar por una pregunta y alternativas
     re_path(r'^question_oneQuestion/$', views.oneQuestion.as_view()),#endpoint para consultar una sola pregunta
     re_path(r'^question_oneQuestionRules/$', views.oneQuestionRules.as_view()),#endpoint para consultar una sola pregunta en base a las reglas establecidas
-    re_path(r'^question_oneQuestionRules_prePaes/$', views.oneQuestionRules.as_view()),#endpoint para consultar una sola pregunta en base a las reglas establecidas
+    
     re_path(r'^questions_alternative/$', views.QuestionsAlternativeAllView.as_view()),#Endpoint para consultar todas las preguntas y alternativas de un ensayo específico
 
     re_path(r'^score_user/all/$', views.AnswerEssayUserView.as_view()),#Endpoint para obtener el puntaje del usuario
     re_path(r'^submit_answers/$', views.SaveAnswersView.as_view()),#Endpoint para guardar las respuestas del usuario
 
-    re_path(r'^submit_one_answers/$', views.SaveOneAnswer.as_view()),#Endpoint para guardar una respuestas del usuario
-    re_path(r'^submit_answer_state/$', views.SaveUserQuestion.as_view()),#Endpoint para guardar una respuestas del usuario
+    re_path(r'^submit_one_answers/$', views.SaveOneAnswer.as_view()),#Endpoint para guardar una respuesta del usuario
+    re_path(r'^submit_answer_state/$', views.SaveUserQuestion.as_view()),#Endpoint para guardar el estado de la respuesta del usuario
 
     re_path(r'^history/(?P<pk>[0-9]+)/$', views.UserEssayHistoryView.as_view()),#Endpoint para consultar el historial de ensayos de un usuario
     re_path(r'^custom_essay_view/(?P<pk>[0-9]+)/$', views.CustomEssayResponseView.as_view()),#Endpoint para consultar un ensayo mediante su id entregal o que se respondio
     re_path(r'^custom_essays/$', views.CustomEssayView.as_view()),#Endpoint para consultar y crear ensayos personalizados
     re_path(r'^custom_essay_questions/$', views.CustomEssayQuestionView.as_view()),#Endpoint para asociar preguntas a un ensayo personalizado
 
+    re_path(r'^PrePAES/verify/$', views.PrePAESListExistView.as_view()),#Endpoint para crear ensayos prePAES
+    re_path(r'^PrePAES/create/$', views.PrePAESCreateView.as_view()),#Endpoint para crear ensayos prePAES
+    re_path(r'^PrePAES_questions_state/$', views.UserPrePAESQuestionsListViews.as_view()),#Endpoint para obtener todas las pregunta que ha respondido de prePAES
+    re_path(r'^PrePAES_questions_state/(?P<fase>[0-9]+)/$', views.UserPrePAESQuestionsListViews.as_view()),#Endpoint para obtener todas las pregunta que ha respondido de prePAES en una fase
+    re_path(r'^question_oneQuestionRules_prePaes/$', views.oneQuestionRulesPrePaes.as_view()),#endpoint para consultar una sola pregunta en base a las reglas establecidas
+    re_path(r'^PrePAES_submit_answers/$', views.AnswerPrePAESView.as_view()),#guarda una respuesta del usuario para método prePAES
+    re_path(r'^PrePAES_data_questions/(?P<question>[0-9]+)/$', views.oneQuestionDataListView.as_view()),#endpoint para consultar la pregunta con todos sus datos
+
+    re_path(r'^PrePAES_stadictis/$', views.stadisticsPrePAESView.as_view()),#endpoint para consultar la pregunta con todos sus datos
+
+
+    #para obtener las demas respuestas usar la url questions_alternativeSpecific
+    re_path(r'^PrePAES_answers/(?P<question>[0-9]+)/$', views.AnswerPrePAESListView.as_view()),#obtener la
+
     re_path(r'^best_average_score/(?P<pk>[0-9]+)/$', views.bestAverageScore.as_view()),#Endpoint para consultar el puntaje maximo y el promedio de puntajes de un usaurio
-    re_path(r'^recent_essay/(?P<pk>[0-9]+)/$', views.CustomEssayMostRecentView.as_view()),#Endpoint para consultar el puntaje maximo y el promedio de puntajes de un usaurio
-    re_path(r'^recent_essay_resume/(?P<pk>[0-9]+)/$', views.CustomEssayMostRecentResumeView.as_view()),#Endpoint para consultar el puntaje maximo y el promedio de puntajes de un usaurio
+    re_path(r'^recent_essay/(?P<pk>[0-9]+)/$', views.CustomEssayMostRecentView.as_view()),#Endpoint para consultar el ensayo más reciente
+    re_path(r'^recent_essay_resume/(?P<pk>[0-9]+)/$', views.CustomEssayMostRecentResumeView.as_view()),#Endpoint para consultar los ultimos 5 ensayos
     re_path(r'^home/$', views.falseCharge.as_view()),#Endpoint para peticion falsa
 ]
 
