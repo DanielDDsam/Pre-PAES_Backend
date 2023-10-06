@@ -233,6 +233,31 @@ class QuestionCreateSerializer(serializers.ModelSerializer):
         model = Question
         exclude = [*generic_fields]
 
+    #06-10 cambiar para que identifique el nombre y no por id
+    def create(self, validated_data):
+        questionData = validated_data.get('question')
+        subjectData = validated_data.get('subject')
+        link_resolutionData = validated_data.get('link_resolution')
+
+        # Obtener el ensayo personalizado del usuario
+
+        if subjectData == 'algebra':
+            type_question = get_object_or_404(MathType, type='algebra')
+        elif subjectData == 'numeros':
+            type_question = get_object_or_404(MathType, type='numeros')
+        elif subjectData == 'probabilidades':
+            type_question = get_object_or_404(MathType, type='probabilidades')
+        elif subjectData == 'geometria':
+            type_question = get_object_or_404(MathType, type='geometria')
+
+        if Question.objects.filter(question = questionData).exists():#verifica que no haya otra pregunta con el mismo enunciado
+                raise serializers.ValidationError('Ya existe una pregunta con este enunciado')
+
+            # Crear el objeto AnswerEssayUser
+        question = Question.objects.create(subject=subjectData, question=questionData, link_resolution=link_resolutionData,type_question=type_question)
+        return question
+    
+
 
 # Serializador para Essay
 class EssaySerializer(serializers.ModelSerializer):
