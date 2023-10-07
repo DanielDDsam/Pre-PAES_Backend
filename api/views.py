@@ -609,7 +609,6 @@ class PrePAESListExistView(generics.ListAPIView):
 class oneQuestionRulesPrePaes(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = QuestionOneSerializer
-    filter_backends = [DjangoFilterBackend]
 
     def get_queryset(self):
         user = self.request.user#obtenemos el usuario actual 
