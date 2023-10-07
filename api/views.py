@@ -612,7 +612,7 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
 
     def get_queryset(self):
         user = self.request.user#obtenemos el usuario actual 
-        UserQuestionState_ids = UserQuestionState.objects.filter(users_id = user.id).values_list('id', flat=True) #obtenemos los ids de las preguntas contestadas 
+        UserQuestionState_ids = UserQuestionState.objects.filter(users_id = user.id).values_list('question_id', flat=True) #obtenemos los ids de las preguntas contestadas 
         pregunta = self.obtener_pregunta(user)#pasamos el usuario para obtener una pregunta
         #print(UserQuestionState_ids)
         if pregunta == 'nueva':
@@ -655,12 +655,14 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
         #06-11 cristian recuerda esto, ahora debes impedir que alguna de las preguntas seleccionadas para refozar o correctas sean de las utlima 10 elegidas, ya que sino puede repetir hasta 5 veces la misma pregunta
 
         lastPrePAES = PrePAES.objects.filter(user = user).order_by('-created').first()#obtenemos el ultimo prePAES
-        prePaesQuestion = PrePAESQuestion.objects.filter(pre_PAES = lastPrePAES).values_list('id', flat=True) #obtenemos todas las preguntas de este ultimo prePAES para evitar que obtenga preguntas repetidas en la misma
+        prePaesQuestion = PrePAESQuestion.objects.filter(pre_PAES = lastPrePAES).values_list('question_id', flat=True) #obtenemos todas las preguntas de este ultimo prePAES para evitar que obtenga preguntas repetidas en la misma
+        print(lastPrePAES)
+        print(prePaesQuestion)
 
         create_data = UserQuestionState.objects.filter(users_id = user.id).order_by('created')[:2] #obtemos las preguntas ordenadas por orden de creación
         update_data = UserQuestionState.objects.filter(users_id = user.id).order_by('updated')[:2] #obtemos las preguntas ordenadas por orden de modificacion 
         
-        allquestionsObtain = UserQuestionState.objects.filter(users_id = user.id).exclude(id__in=prePaesQuestion)
+        allquestionsObtain = UserQuestionState.objects.filter(users_id = user.id).exclude(question_id__in=prePaesQuestion)
  
         todos_los_elementos = list(create_data) + list(update_data) #obtenemos las 2 ultimas creadas y modificadoas
         todos_los_elementos.sort(key=lambda x: x.created if x.created else x.updated, reverse=True) #se ordena por la fecha mas actual primero para ver las utimas 2 contestadas
@@ -718,8 +720,7 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
         else:
             # Indicar que la pregunta debe ser nueva
             return 'nueva'
-        #print(pregunta_seleccionada.id)
-        return pregunta_seleccionada
+        
 
 class UserPrePAESQuestionsListViews(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
@@ -764,7 +765,7 @@ class AnswerPrePAESView(generics.CreateAPIView): #22-09
     serializer_class = SaveAnswerPrePAESSerializer
 
     def post(self, request): #lo mismo que hicimos en apy.py de users, se usa post ya que es un apiview
-        print(request.data)
+        #print(request.data)
         serializer = self.serializer_class(data=request.data, context={'request': request})
         if serializer.is_valid():
             
