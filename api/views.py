@@ -614,7 +614,7 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
         user = self.request.user#obtenemos el usuario actual 
         UserQuestionState_ids = UserQuestionState.objects.filter(users_id = user.id).values_list('id', flat=True) #obtenemos los ids de las preguntas contestadas 
         pregunta = self.obtener_pregunta(user)#pasamos el usuario para obtener una pregunta
-        
+        #print(UserQuestionState_ids)
         if pregunta == 'nueva':
             if UserQuestionState_ids:#vemos si ya contesto alguna pregunta
                 queryset = Question.objects.all().exclude(id__in=UserQuestionState_ids).order_by('?').first() #sacamos una pregunta que no este entre las ya contestadas
@@ -641,7 +641,7 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
         queryset = PrePAES.objects.filter(user = user).order_by('-created').first()
         essaySerializer = PrePAESCreateSerializer(queryset)
     
-        print(queryset)
+        #print(queryset)
         #Guardamos la convinación de la fase de prePAES y la pregunta
         serializer = PrePAESSaveQuestionSerializer(data={'pre_PAES':essaySerializer.data['id'],'question':questionData['id']}) 
         serializer.is_valid()
@@ -651,16 +651,23 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
     
     def obtener_pregunta(self, user):
     # Contadores de preguntas correctas y reforzar
+
+        #06-11 cristian recuerda esto, ahora debes impedir que alguna de las preguntas seleccionadas para refozar o correctas sean de las utlima 10 elegidas, ya que sino puede repetir hasta 5 veces la misma pregunta
+
+        lastPrePAES = PrePAES.objects.filter(user = user).order_by('-created').first()#obtenemos el ultimo prePAES
+        prePaesQuestion = PrePAESQuestion.objects.filter(pre_PAES = lastPrePAES).values_list('id', flat=True) #obtenemos todas las preguntas de este ultimo prePAES para evitar que obtenga preguntas repetidas en la misma
+
         create_data = UserQuestionState.objects.filter(users_id = user.id).order_by('created')[:2] #obtemos las preguntas ordenadas por orden de creación
         update_data = UserQuestionState.objects.filter(users_id = user.id).order_by('updated')[:2] #obtemos las preguntas ordenadas por orden de modificacion 
-        allquestions = UserQuestionState.objects.filter(users_id = user.id) #las obtenemos todas
+        
+        allquestionsObtain = UserQuestionState.objects.filter(users_id = user.id).exclude(id__in=prePaesQuestion)
  
         todos_los_elementos = list(create_data) + list(update_data) #obtenemos las 2 ultimas creadas y modificadoas
         todos_los_elementos.sort(key=lambda x: x.created if x.created else x.updated, reverse=True) #se ordena por la fecha mas actual primero para ver las utimas 2 contestadas
         questionState = []
         questionState.extend(todos_los_elementos)
 
-        print(todos_los_elementos)
+        #print(todos_los_elementos)
         if (todos_los_elementos != []):
        
             if (todos_los_elementos[0] == todos_los_elementos[1] and (len(todos_los_elementos) == 2)):
@@ -676,24 +683,34 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
                             del questionState[i]
             #en resumen dejamos las 2 preguntas contestadas recientemente, verificando que no sean las mismas
 
-        preguntas_correctas = sum(1 for pregunta in allquestions if pregunta.state == 'Correcta')
-        preguntas_erroneas = sum(1 for pregunta in allquestions if pregunta.state == 'Reforzar')
+        allquestionsVerify = UserQuestionState.objects.filter(users_id = user.id) #las obtenemos todas para verificar cuantas preguntas hemos contestado hasta el momento en temas de correctas y erroneas
+        preguntas_correctas = sum(1 for pregunta in allquestionsVerify if pregunta.state == 'Correcta')
+        preguntas_erroneas = sum(1 for pregunta in allquestionsVerify if pregunta.state == 'Reforzar')
 
         # Verificar si se han respondido al menos 3 preguntas erróneas y 3 preguntas para reforzar
         if preguntas_correctas + preguntas_erroneas >= 6:
             # Obtener las últimas 2 respuestas del usuario
 
-            ultimas_respuestas = [pregunta.state for pregunta in questionState[-2:]]
+            ultimas_respuestas = [pregunta.state for pregunta in questionState[-2:]] #verificamos en que estado se encuentran las utlimas 2 respuestas 
             # Probabilidad de cambiar una pregunta "correcta" a "reforzar" o "nueva"
             if ultimas_respuestas == ['Correcta', 'Correcta'] and random.random() < 0.7:
                 # Cambiar una pregunta "correcta" a "reforzar"
-                preguntas_erroneas_list = [pregunta for pregunta in allquestions if pregunta.state == 'Reforzar']
-                pregunta_seleccionada = random.choice(preguntas_erroneas_list)
+                preguntas_erroneas_list = [pregunta for pregunta in allquestionsObtain if pregunta.state == 'Reforzar']
+
+                if len(preguntas_erroneas_list) != 0: #si hay preguntas erroneas obtener alguna de ellas
+                    pregunta_seleccionada = random.choice(preguntas_erroneas_list)
+                else:#si no, obtener alguna nueva
+                    return 'nueva'
                 pass
             elif ultimas_respuestas == ['Reforzar', 'Reforzar'] and random.random() < 0.7:
                 # Cambiar una pregunta "errónea" a "correcta"
-                preguntas_correctas_list = [pregunta for pregunta in allquestions if pregunta.state == 'Correcta']
+                preguntas_correctas_list = [pregunta for pregunta in allquestionsObtain if pregunta.state == 'Correcta']
                 pregunta_seleccionada = random.choice(preguntas_correctas_list)
+
+                if len(preguntas_erroneas_list) != 0:
+                    pregunta_seleccionada = random.choice(preguntas_erroneas_list)
+                else:
+                    return 'nueva'
                 pass
             else:
                 # Indicar que la pregunta debe ser nueva
@@ -747,6 +764,7 @@ class AnswerPrePAESView(generics.CreateAPIView): #22-09
     serializer_class = SaveAnswerPrePAESSerializer
 
     def post(self, request): #lo mismo que hicimos en apy.py de users, se usa post ya que es un apiview
+        print(request.data)
         serializer = self.serializer_class(data=request.data, context={'request': request})
         if serializer.is_valid():
             
