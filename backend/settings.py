@@ -114,19 +114,19 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 
 DATABASES = {
 
-        #'default': dj_database_url.config(
+        'default': dj_database_url.config(
             #Feel free to alter this value to suit your needs.
-         #   default='postgresql://postgres:postgres@localhost:5432/mysite',
-          #  conn_max_age=600
-        #) 
-        'default': {
-            'ENGINE': 'django.db.backends.mysql',
-            'NAME': 'mathia_final',
-            'USER': 'cristian',
-            'PASSWORD': 'root',
-            'HOST': 'localhost',
-            'PORT': '3306'
-        }
+            default='postgresql://postgres:postgres@localhost:5432/mysite',
+            conn_max_age=600
+        ) 
+        #'default': {
+         #   'ENGINE': 'django.db.backends.mysql',
+          #  'NAME': 'mathia_final',
+           # 'USER': 'cristian',
+            #'PASSWORD': 'root',
+            #'HOST': 'localhost',
+            #'PORT': '3306'
+        #}
 
     }
 
