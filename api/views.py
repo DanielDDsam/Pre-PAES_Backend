@@ -641,6 +641,7 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
         queryset = PrePAES.objects.filter(user = user).order_by('-created').first()
         essaySerializer = PrePAESCreateSerializer(queryset)
     
+        print(queryset)
         #Guardamos la convinación de la fase de prePAES y la pregunta
         serializer = PrePAESSaveQuestionSerializer(data={'pre_PAES':essaySerializer.data['id'],'question':questionData['id']}) 
         serializer.is_valid()
@@ -659,18 +660,21 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
         questionState = []
         questionState.extend(todos_los_elementos)
 
-        if (todos_los_elementos[0] == todos_los_elementos[1] and (len(todos_los_elementos) == 2)):
-            del questionState[1]
-        else:
-            for i in range(len(todos_los_elementos)): #eliminamos las preguntas repetidas
-            
-                if(i == 0):
-                    if (todos_los_elementos[i] == todos_los_elementos[i+1]): #si la primera pregunta tambien es la segunda entonces eliminamos la segunda
-                        del questionState[i+1]
-                else:
-                    if (todos_los_elementos[0] == todos_los_elementos[i]): 
-                        del questionState[i]
-        #en resumen dejamos las 2 preguntas contestadas recientemente, verificando que no sean las mismas
+        print(todos_los_elementos)
+        if (todos_los_elementos != []):
+       
+            if (todos_los_elementos[0] == todos_los_elementos[1] and (len(todos_los_elementos) == 2)):
+                del questionState[1]
+            else:
+                for i in range(len(todos_los_elementos)): #eliminamos las preguntas repetidas
+                
+                    if(i == 0):
+                        if (todos_los_elementos[i] == todos_los_elementos[i+1]): #si la primera pregunta tambien es la segunda entonces eliminamos la segunda
+                            del questionState[i+1]
+                    else:
+                        if (todos_los_elementos[0] == todos_los_elementos[i]): 
+                            del questionState[i]
+            #en resumen dejamos las 2 preguntas contestadas recientemente, verificando que no sean las mismas
 
         preguntas_correctas = sum(1 for pregunta in allquestions if pregunta.state == 'Correcta')
         preguntas_erroneas = sum(1 for pregunta in allquestions if pregunta.state == 'Reforzar')
