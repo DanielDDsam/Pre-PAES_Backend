@@ -623,6 +623,7 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
         else:
             queryset = Question.objects.filter(id=pregunta.question_id).first() #si la pregunta no es nueva, es reforzar o correcta la obtenemos 
 
+        print(queryset.id)
         return queryset
 
     def list(self, request):
