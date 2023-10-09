@@ -707,7 +707,7 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
             ultimas_respuestas = [pregunta.state for pregunta in questionState[-2:]] #verificamos en que estado se encuentran las utlimas 2 respuestas 
             print(ultimas_respuestas)
             # Probabilidad de cambiar una pregunta "correcta" a "reforzar" o "nueva"
-            if ultimas_respuestas == ['Correcta', 'Correcta'] and random.random() < 0.7:
+            if ultimas_respuestas == ['Correcta', 'Correcta'] and random.random() > 0:
                 # Cambiar una pregunta "correcta" a "reforzar"
                 print('710')
                 preguntas_erroneas_list = [pregunta for pregunta in allquestionsObtain if pregunta.state == 'Reforzar']
@@ -721,7 +721,7 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
                     print('nueva1')
                     return 'nueva'
                 
-            if ultimas_respuestas == ['Reforzar', 'Reforzar'] and random.random() < 0.7:
+            if ultimas_respuestas == ['Reforzar', 'Reforzar'] and random.random() > 0:
                 # Cambiar una pregunta "errónea" a "correcta"
                 print('723')
                 preguntas_correctas_list = [pregunta for pregunta in allquestionsObtain if pregunta.state == 'Correcta']
