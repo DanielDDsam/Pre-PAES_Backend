@@ -614,7 +614,8 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
         user = self.request.user#obtenemos el usuario actual 
         UserQuestionState_ids = UserQuestionState.objects.filter(users_id = user.id).values_list('question_id', flat=True) #obtenemos los ids de las preguntas contestadas 
         pregunta = self.obtener_pregunta(user)#pasamos el usuario para obtener una pregunta
-        print(pregunta)
+        print("PREGUNTA:"+str(pregunta))
+        print("ids question:"+str(UserQuestionState_ids))
         if pregunta == 'nueva':
             if UserQuestionState_ids:#vemos si ya contesto alguna pregunta
                 queryset = Question.objects.all().exclude(id__in=UserQuestionState_ids).order_by('?').first() #sacamos una pregunta que no este entre las ya contestadas
@@ -704,6 +705,7 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
             # Obtener las últimas 2 respuestas del usuario
             print('705')
             ultimas_respuestas = [pregunta.state for pregunta in questionState[-2:]] #verificamos en que estado se encuentran las utlimas 2 respuestas 
+            print(ultimas_respuestas)
             # Probabilidad de cambiar una pregunta "correcta" a "reforzar" o "nueva"
             if ultimas_respuestas == ['Correcta', 'Correcta'] and random.random() < 0.7:
                 # Cambiar una pregunta "correcta" a "reforzar"
@@ -716,7 +718,8 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
                     return pregunta_seleccionada
                 else:#si no, obtener alguna nueva
                     return 'nueva'
-            elif ultimas_respuestas == ['Reforzar', 'Reforzar'] and random.random() < 0.7:
+                
+            if ultimas_respuestas == ['Reforzar', 'Reforzar'] and random.random() < 0.7:
                 # Cambiar una pregunta "errónea" a "correcta"
                 preguntas_correctas_list = [pregunta for pregunta in allquestionsObtain if pregunta.state == 'Correcta']
                 pregunta_seleccionada = random.choice(preguntas_correctas_list)
@@ -727,9 +730,9 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
                     return pregunta_seleccionada
                 else:
                     return 'nueva'
-            else:
-                # Indicar que la pregunta debe ser nueva
-                return 'nueva'
+            
+            # Indicar que la pregunta debe ser nueva
+            return 'nueva'
         else:
             # Indicar que la pregunta debe ser nueva
             return 'nueva'
