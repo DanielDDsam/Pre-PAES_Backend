@@ -614,7 +614,7 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
         user = self.request.user#obtenemos el usuario actual 
         UserQuestionState_ids = UserQuestionState.objects.filter(users_id = user.id).values_list('question_id', flat=True) #obtenemos los ids de las preguntas contestadas 
         pregunta = self.obtener_pregunta(user)#pasamos el usuario para obtener una pregunta
-        #print(UserQuestionState_ids)
+        print(pregunta)
         if pregunta == 'nueva':
             if UserQuestionState_ids:#vemos si ya contesto alguna pregunta
                 queryset = Question.objects.all().exclude(id__in=UserQuestionState_ids).order_by('?').first() #sacamos una pregunta que no este entre las ya contestadas
@@ -702,15 +702,17 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
         # Verificar si se han respondido al menos 3 preguntas erróneas y 3 preguntas para reforzar
         if preguntas_correctas + preguntas_erroneas >= 6:
             # Obtener las últimas 2 respuestas del usuario
-
+            print('705')
             ultimas_respuestas = [pregunta.state for pregunta in questionState[-2:]] #verificamos en que estado se encuentran las utlimas 2 respuestas 
             # Probabilidad de cambiar una pregunta "correcta" a "reforzar" o "nueva"
             if ultimas_respuestas == ['Correcta', 'Correcta'] and random.random() < 0.7:
                 # Cambiar una pregunta "correcta" a "reforzar"
+                print('710')
                 preguntas_erroneas_list = [pregunta for pregunta in allquestionsObtain if pregunta.state == 'Reforzar']
-
+                print(preguntas_erroneas_list)
                 if len(preguntas_erroneas_list) != 0: #si hay preguntas erroneas obtener alguna de ellas
                     pregunta_seleccionada = random.choice(preguntas_erroneas_list)
+                    print(pregunta_seleccionada)
                     return pregunta_seleccionada
                 else:#si no, obtener alguna nueva
                     return 'nueva'
@@ -718,9 +720,10 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
                 # Cambiar una pregunta "errónea" a "correcta"
                 preguntas_correctas_list = [pregunta for pregunta in allquestionsObtain if pregunta.state == 'Correcta']
                 pregunta_seleccionada = random.choice(preguntas_correctas_list)
-
-                if len(preguntas_erroneas_list) != 0:
-                    pregunta_seleccionada = random.choice(preguntas_erroneas_list)
+                print(preguntas_correctas_list)
+                if len(preguntas_correctas_list) != 0:
+                    pregunta_seleccionada = random.choice(preguntas_correctas_list)
+                    print(pregunta_seleccionada)
                     return pregunta_seleccionada
                 else:
                     return 'nueva'
