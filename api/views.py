@@ -711,9 +711,9 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
 
                 if len(preguntas_erroneas_list) != 0: #si hay preguntas erroneas obtener alguna de ellas
                     pregunta_seleccionada = random.choice(preguntas_erroneas_list)
+                    return pregunta_seleccionada
                 else:#si no, obtener alguna nueva
                     return 'nueva'
-                pass
             elif ultimas_respuestas == ['Reforzar', 'Reforzar'] and random.random() < 0.7:
                 # Cambiar una pregunta "errónea" a "correcta"
                 preguntas_correctas_list = [pregunta for pregunta in allquestionsObtain if pregunta.state == 'Correcta']
@@ -721,9 +721,9 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
 
                 if len(preguntas_erroneas_list) != 0:
                     pregunta_seleccionada = random.choice(preguntas_erroneas_list)
+                    return pregunta_seleccionada
                 else:
                     return 'nueva'
-                pass
             else:
                 # Indicar que la pregunta debe ser nueva
                 return 'nueva'
