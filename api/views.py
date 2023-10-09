@@ -707,12 +707,12 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
             ultimas_respuestas = [pregunta.state for pregunta in questionState[-2:]] #verificamos en que estado se encuentran las utlimas 2 respuestas 
             print(ultimas_respuestas)
             # Probabilidad de cambiar una pregunta "correcta" a "reforzar" o "nueva"
-            if ultimas_respuestas == ['Correcta', 'Correcta'] and random.random() > 0:
+            if ultimas_respuestas == ['Correcta', 'Correcta']:
                 # Cambiar una pregunta "correcta" a "reforzar"
                 print('710')
                 preguntas_erroneas_list = [pregunta for pregunta in allquestionsObtain if pregunta.state == 'Reforzar']
                 pregunta_seleccionada = random.choice(preguntas_erroneas_list)
-                print(preguntas_erroneas_list)
+                print(pregunta_seleccionada)
                 if len(preguntas_erroneas_list) != 0: #si hay preguntas erroneas obtener alguna de ellas
                     pregunta_seleccionada = random.choice(preguntas_erroneas_list)
                     print(pregunta_seleccionada)
@@ -721,11 +721,12 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
                     print('nueva1')
                     return 'nueva'
                 
-            if ultimas_respuestas == ['Reforzar', 'Reforzar'] and random.random() > 0:
+            if ultimas_respuestas == ['Reforzar', 'Reforzar']:
                 # Cambiar una pregunta "errónea" a "correcta"
                 print('723')
                 preguntas_correctas_list = [pregunta for pregunta in allquestionsObtain if pregunta.state == 'Correcta']
                 pregunta_seleccionada = random.choice(preguntas_correctas_list)
+                print(pregunta_seleccionada)
                 if len(preguntas_correctas_list) != 0:
                     pregunta_seleccionada = random.choice(preguntas_correctas_list)
                     print(pregunta_seleccionada)
