@@ -670,8 +670,8 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
         print(lastPrePAES)
         print(prePaesQuestion)
 
-        create_data = UserQuestionState.objects.filter(users_id = user.id).order_by('created')[:2] #obtemos las preguntas ordenadas por orden de creación
-        update_data = UserQuestionState.objects.filter(users_id = user.id).order_by('updated')[:2] #obtemos las preguntas ordenadas por orden de modificacion 
+        create_data = UserQuestionState.objects.filter(users_id = user.id).order_by('-created')[:2] #obtemos las preguntas ordenadas por orden de creación las ultimas primero
+        update_data = UserQuestionState.objects.filter(users_id = user.id).order_by('-updated')[:2] #obtemos las preguntas ordenadas por orden de modificacion las ultimas primero
         
         allquestionsObtain = UserQuestionState.objects.filter(users_id = user.id).exclude(question_id__in=prePaesQuestion)
  
