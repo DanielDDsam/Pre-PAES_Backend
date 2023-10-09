@@ -627,11 +627,12 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
 
     def list(self, request):
         # Note the use of `get_queryset()` instead of `self.queryset`
+        queryset = self.get_queryset()
+        serializer = QuestionOneSerializer(queryset) 
+        self.save_obtain_question(serializer.data)
+        print('data:'+str(serializer.data))
         try:
-            queryset = self.get_queryset()
-            serializer = QuestionOneSerializer(queryset) 
-            self.save_obtain_question(serializer.data)
-            print('data:'+str(serializer.data))
+            
             return Response(serializer.data)
         except Exception as e:
             return Response({'error': str(e), 'data': serializer.data}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
