@@ -711,6 +711,7 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
                 # Cambiar una pregunta "correcta" a "reforzar"
                 print('710')
                 preguntas_erroneas_list = [pregunta for pregunta in allquestionsObtain if pregunta.state == 'Reforzar']
+                pregunta_seleccionada = random.choice(preguntas_erroneas_list)
                 print(preguntas_erroneas_list)
                 if len(preguntas_erroneas_list) != 0: #si hay preguntas erroneas obtener alguna de ellas
                     pregunta_seleccionada = random.choice(preguntas_erroneas_list)
@@ -724,7 +725,7 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
                 # Cambiar una pregunta "errónea" a "correcta"
                 print('723')
                 preguntas_correctas_list = [pregunta for pregunta in allquestionsObtain if pregunta.state == 'Correcta']
-                print(preguntas_correctas_list)
+                pregunta_seleccionada = random.choice(preguntas_correctas_list)
                 if len(preguntas_correctas_list) != 0:
                     pregunta_seleccionada = random.choice(preguntas_correctas_list)
                     print(pregunta_seleccionada)
