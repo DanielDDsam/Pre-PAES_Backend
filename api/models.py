@@ -124,6 +124,7 @@ class Question(GenericAttributes):
     link_resolution = models.URLField(**common_args, unique=True)
     type_question = models.ForeignKey(MathType, **common_args,on_delete=models.CASCADE, related_name='question_type')
     users = models.ManyToManyField(Users, blank=True, through='UserQuestionState', related_name='question_user') #18-07
+    dificult = models.TextField(**common_args)
 
 #Clase de errores #21-09-2023
 class QuestionError(GenericAttributes):

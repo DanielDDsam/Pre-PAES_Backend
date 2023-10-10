@@ -174,6 +174,31 @@ class QuestionRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     queryset = Question.objects.filter().order_by('pk')  # Consulta para obtener las preguntas ordenadas por clave primaria
     serializer_class = QuestionSerializer  # Clase serializadora utilizada
 
+class QuestionDificultJson(generics.UpdateAPIView):
+    #permission_classes = [IsAuthenticated]
+    queryset = Question.objects.filter().order_by('pk')  # Consulta para obtener las preguntas ordenadas por clave primaria
+    serializer_class = QuestionSerializer  # Clase serializadora utilizada
+
+    def get_queryset(self, id):
+        return Question.objects.filter(id=id).first()  # Devolver los ensayos personalizados del usuario
+
+    def patch(self, request):
+
+        data = request.data
+        instances = []
+        for question in data:
+            
+            questionObject = self.get_queryset(question['id']) 
+
+            if questionObject is not None:
+                 print(questionObject.id)
+                 questionObject.id = question['id']
+                 questionObject.dificult = question['dificult']
+                 questionObject.save()
+                 instances.append(questionObject)
+        serializers = self.serializer_class(instances, many = True)
+        return Response(serializers.data)
+
 
 class AnswerRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated]
@@ -614,8 +639,8 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
         user = self.request.user#obtenemos el usuario actual 
         UserQuestionState_ids = UserQuestionState.objects.filter(users_id = user.id).values_list('question_id', flat=True) #obtenemos los ids de las preguntas contestadas 
         pregunta = self.obtener_pregunta(user)#pasamos el usuario para obtener una pregunta
-        print("PREGUNTA:"+str(pregunta))
-        print("ids question:"+str(UserQuestionState_ids))
+        #print("PREGUNTA:"+str(pregunta))
+        #print("ids question:"+str(UserQuestionState_ids))
         if pregunta == 'nueva':
             if UserQuestionState_ids:#vemos si ya contesto alguna pregunta
                 queryset = Question.objects.all().exclude(id__in=UserQuestionState_ids).order_by('?').first() #sacamos una pregunta que no este entre las ya contestadas
@@ -624,22 +649,21 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
         else:
             queryset = Question.objects.filter(id=pregunta.question_id).first() #si la pregunta no es nueva, es reforzar o correcta la obtenemos 
 
-        print(queryset.id)
+        #print(queryset.id)
         return queryset
 
     def list(self, request):
         # Note the use of `get_queryset()` instead of `self.queryset`
         queryset = self.get_queryset()
-        print('queryset:'+str(queryset))
+        #print('queryset:'+str(queryset))
 
         serializer = QuestionOneSerializer(queryset) 
-        print('serializer:'+str(serializer))
-        print('serializer2:'+str(serializer.data))
+        #print('serializer:'+str(serializer))
+        #print('serializer2:'+str(serializer.data))
 
         self.save_obtain_question(serializer.data)
-        print('data:'+str(serializer.data))
-        
-            
+        serializer.data['answer'] = random.shuffle(serializer.data['answer'])#mezclamos las respuestas
+
         return Response(serializer.data)
         
         
@@ -833,7 +857,6 @@ class stadisticsPrePAESView(generics.ListAPIView):
     
     def stateMAX(self, serializer):
         claves = {"Reforzar": {}, "Correcta": {}}
-
         for data in serializer.data:
             state = data["state"]# Reforzar o Correcta desde los datos de la base de datos
             subject = data["subject"]
@@ -843,10 +866,14 @@ class stadisticsPrePAESView(generics.ListAPIView):
             else:
                 claves[state][subject] += 1 #para caba subject suma +1 si aparece
 
-        most_common_subjects = {
-            state: max(claves[state], key=claves[state].get) #la funcion max en base a los estados, identifica mediante la obtencion de get cual es el que más se repite
-            for state in claves #iteramos en la claves proporcionado este caso reforzar y Correcta
-        }
+        most_common_subjects = {}
+        for state in claves:#iteramos en la claves proporcionado este caso reforzar y Correcta
+            most_common_subjects[state] = max(claves[state], key=claves[state].get, default=0)#la funcion max en base a los estados, identifica mediante la obtencion de get cual es el que más se repite em base al elemeto definido, en este caso las claves[state], default da un valor si el iterable esta vacio
+
+        #most_common_subjects = {
+         #   state: max(claves[state], key=claves[state].get, default=0) #la funcion max en base a los estados, identifica mediante la obtencion de get cual es el que más se repite em base al elemeto definido, en este caso las claves[state], default da un valor si el iterable esta vacio
+          #  for state in claves #iteramos en la claves proporcionado este caso reforzar y Correcta
+        #}
 
         return most_common_subjects
     
@@ -877,6 +904,7 @@ class stadisticsPrePAESView(generics.ListAPIView):
         most_common_state = self.stateDificult(serializer)
         dificult_subjects = {}
         j = 0
+        print('data :'+str(most_common_state))
         for i in most_common_state:
             
             reforzar = most_common_state[i].get('Reforzar')
@@ -896,6 +924,8 @@ class stadisticsPrePAESView(generics.ListAPIView):
                     dificult_subjects[keys[j]] = 'Dificil'
                 if reforzar == correcta:
                     dificult_subjects[keys[j]] = 'Intermedio'        
+            
+            j+=1
                
         data = []
         data.append(most_common_subjects)
