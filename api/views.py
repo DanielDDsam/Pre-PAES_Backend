@@ -644,8 +644,10 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
         if pregunta == 'nueva':
             if UserQuestionState_ids:#vemos si ya contesto alguna pregunta
                 queryset = Question.objects.all().exclude(id__in=UserQuestionState_ids).order_by('?').first() #sacamos una pregunta que no este entre las ya contestadas
+                print(queryset)
             else:
                 queryset = Question.objects.all().order_by('?').first()
+                print(queryset)
         else:
             queryset = Question.objects.filter(id=pregunta.question_id).first() #si la pregunta no es nueva, es reforzar o correcta la obtenemos 
 
