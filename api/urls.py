@@ -29,6 +29,7 @@ urlpatterns = [
     re_path(r'^questions/create/$', views.QuestionCreate.as_view()),#Endpoint para crear una pregunta
     re_path(r'^questions/(?P<pk>[0-9]+)/$', views.QuestionRetrieveUpdateDestroy.as_view()),#Endpoint para consultar, eliminar, actualizar una pregunta específica
     re_path(r'^questions_types/(?P<tiposDePreguntas>[^/]+)/(?P<numeroDePreguntas>\d+)/$', views.QuestionListType.as_view()),#Endpoint para consultar preguntas en base a tipos
+    re_path(r'^questions/dificult/$', views.QuestionDificultJson.as_view()),#Endpoint para consultar, eliminar, actualizar una pregunta específica
 
     re_path(r'^answers/list/all/$', views.AnswerList.as_view()),#Endpoint para consultar todas las respuestas
     re_path(r'^answers/create/$', views.AnswerCreate.as_view()),#Endpoint para crear una respuesta
