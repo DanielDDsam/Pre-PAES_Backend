@@ -639,8 +639,8 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
         user = self.request.user#obtenemos el usuario actual 
         UserQuestionState_ids = UserQuestionState.objects.filter(users_id = user.id).values_list('question_id', flat=True) #obtenemos los ids de las preguntas contestadas 
         pregunta = self.obtener_pregunta(user)#pasamos el usuario para obtener una pregunta
-        #print("PREGUNTA:"+str(pregunta))
-        #print("ids question:"+str(UserQuestionState_ids))
+        print("PREGUNTA:"+str(pregunta))
+        print("ids question:"+str(UserQuestionState_ids))
         if pregunta == 'nueva':
             if UserQuestionState_ids:#vemos si ya contesto alguna pregunta
                 queryset = Question.objects.all().exclude(id__in=UserQuestionState_ids).order_by('?').first() #sacamos una pregunta que no este entre las ya contestadas
@@ -649,17 +649,17 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
         else:
             queryset = Question.objects.filter(id=pregunta.question_id).first() #si la pregunta no es nueva, es reforzar o correcta la obtenemos 
 
-        #print(queryset.id)
+        print(queryset.id)
         return queryset
 
     def list(self, request):
         # Note the use of `get_queryset()` instead of `self.queryset`
         queryset = self.get_queryset()
-        #print('queryset:'+str(queryset))
+        print('queryset:'+str(queryset))
 
         serializer = QuestionOneSerializer(queryset) 
-        #print('serializer:'+str(serializer))
-        #print('serializer2:'+str(serializer.data))
+        print('serializer:'+str(serializer))
+        
 
         self.save_obtain_question(serializer.data)
         serializer.data['answer'] = random.shuffle(serializer.data['answer'])#mezclamos las respuestas
