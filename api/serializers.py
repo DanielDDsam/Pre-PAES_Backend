@@ -145,13 +145,13 @@ class SendPasswordResetEmailSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         email = attrs.get('email')
-
+        print('148'+str(email))
         # Verificar si el usuario existe en la base de datos
         if Users.objects.filter(email=email).exists():
             user = Users.objects.get(email=email)
             uid = urlsafe_base64_encode(force_bytes(user.id))
             token = PasswordResetTokenGenerator().make_token(user)
-            link = 'http://localhost:3000/api/user/reset/'+uid+'/'+token
+            link = 'http://localhost:5173/Reset/Password/'+str(uid)+'/'+str(token)
 
             # Enviar el correo electrónico de restablecimiento de contraseña
             subject = 'Reinicia tu contraseña'
@@ -184,10 +184,11 @@ class UserPasswordResetSerializer(serializers.Serializer):
             # Verificar que las contraseñas coincidan
             if password != password2:
                 raise serializers.ValidationError("Las contraseñas no coinciden")
-
+            print('id lb 191:'+str(uid))
             # Decodificar el UID y obtener el usuario correspondiente
             id = smart_str(urlsafe_base64_decode(uid))
             user = Users.objects.get(id=id)
+            print('id lb 191:'+str(id))
 
             # Verificar que el token sea válido
             if not PasswordResetTokenGenerator().check_token(user, token):
@@ -800,11 +801,11 @@ class SaveAnswerPrePAESSerializer(serializers.Serializer):
         return prePAES_answer
 
 class UserQuestionStateSerializer(serializers.ModelSerializer): #18-07 este solo se usara para mostar los datos de esta tabla, ya que como tiene elementos de otras, lo idel es usar el de abajo para crearlos
-    question = QuestionSerializer
+    question = QuestionSerializer()
     
     class Meta:
         model = UserQuestionState
-        fields = ['state','question_id','users_id']
+        fields = ['state','question_id','users_id','question']
 
 class SaveUserQuestionState(serializers.Serializer): #18-07
     answer_id = serializers.IntegerField()

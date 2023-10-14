@@ -12,6 +12,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models.functions import Random
 import random
 import math
+from django.db.models import F
 # Create your views here.
 
 #funcion para obtener jwt para el usuario cuando hace login
@@ -121,6 +122,7 @@ class SendPasswordResetEmailView(APIView):
     renderer_classes = [UserRenderer]  # Clase de renderizado utilizada para la vista
 
     def post(self, request, format=None):
+        print('124'+str(request.data))
         serializer = SendPasswordResetEmailSerializer(data=request.data)  # Serializador utilizado para validar y procesar los datos del formulario
         serializer.is_valid(raise_exception=True)  # Valida los datos y lanza una excepción si no son válidos
         return Response({'msg': 'Link para reiniciar contraseña enviado'}, status=status.HTTP_200_OK)  # Retorna un mensaje de éxito en la respuesta
@@ -130,6 +132,8 @@ class UserPasswordResetView(APIView):
     renderer_classes = [UserRenderer]  # Clase de renderizado utilizada para la vista
 
     def post(self, request, uid, token, format=None):
+        print('134'+str(self.kwargs.get('uid')))
+        print('135'+str(self.kwargs.get('uid')))
         serializer = UserPasswordResetSerializer(data=request.data, context={'uid':uid,'token':token})  # Serializador utilizado para validar y procesar los datos del formulario
         serializer.is_valid(raise_exception=True)  # Valida los datos y lanza una excepción si no son válidos
         return Response({'msg':'Cambio de contraseña exitoso'}, status=status.HTTP_200_OK)  # Retorna un mensaje de éxito en la respuesta
@@ -637,11 +641,33 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
 
     def get_queryset(self):
         user = self.request.user#obtenemos el usuario actual 
+        data = self.obtener_pregunta(user)#pasamos el usuario para obtener una pregunta
         UserQuestionState_ids = UserQuestionState.objects.filter(users_id = user.id).values_list('question_id', flat=True) #obtenemos los ids de las preguntas contestadas 
-        pregunta = self.obtener_pregunta(user)#pasamos el usuario para obtener una pregunta
-        print("PREGUNTA:"+str(pregunta))
-        print("ids question:"+str(UserQuestionState_ids))
-        if pregunta == 'nueva':
+        lastPrePAES = PrePAES.objects.filter(user = user).order_by('-created').first()#obtenemos el ultimo prePAES
+        prePaesQuestion = PrePAESQuestion.objects.filter(pre_PAES = lastPrePAES).values_list('question_id', flat=True) #obtenemos todas las preguntas de este ultimo prePAES para evitar que obtenga preguntas repetidas en la misma
+        print(data)
+
+        if(isinstance(data, UserQuestionState)):
+            queryset = Question.objects.filter(id=data.question_id).first() #si es reforzar o correcta la obtenemos 
+        else:
+            if data['flag'] == 0:
+                queryset = Question.objects.filter(dificult = data['dificultad']).order_by('?').first() #retornamos una pregunta inicial que sea de dificultad facil y de cualquier categoria
+            elif data['flag'] == 1:
+                queryset = Question.objects.filter(dificult = data['dificultad'], type_question_id = data['categoria']).exclude(id__in = UserQuestionState_ids).order_by('?').first() #retornamos una pregunta nueva que no sea una de las ya contestadas y respetando la dificultad y categoria
+                print('651'+str(queryset))
+                if(queryset is None):#si ya no quedan nuevas preguntas per dificultad o categoria, entonces saldra una al alzar repetando lo ultimo y evitan la repetición de alguna de las que ya se encuentran en la fase actual de prePAES
+                    queryset = Question.objects.filter(dificult = data['dificultad'], type_question_id = data['categoria']).exclude(id__in = data['prePaesQuestion']).order_by('?').first()
+                    if(queryset is None):
+                        queryset = Question.objects.filter(dificult = data['dificultad']).exclude(id__in = data['prePaesQuestion']).order_by('?').first()
+                print('660'+str(queryset))
+            
+            
+        """print("PREGUNTA:"+str(data['tipo']))
+        if data['tipo'] == 'nueva':
+
+            UserQuestionState_ids = UserQuestionState.objects.filter(users_id = user.id).values_list('question_id', flat=True) #obtenemos los ids de las preguntas contestadas 
+            print("ids question:"+str(UserQuestionState_ids))
+
             if UserQuestionState_ids:#vemos si ya contesto alguna pregunta
                 queryset = Question.objects.all().exclude(id__in=UserQuestionState_ids).order_by('?').first() #sacamos una pregunta que no este entre las ya contestadas
                 print(queryset)
@@ -651,25 +677,22 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
         else:
             queryset = Question.objects.filter(id=pregunta.question_id).first() #si la pregunta no es nueva, es reforzar o correcta la obtenemos 
 
-        print(queryset.id)
+        print(queryset.id)"""
+        
         return queryset
 
     def list(self, request):
         # Note the use of `get_queryset()` instead of `self.queryset`
         queryset = self.get_queryset()
-        print('queryset:'+str(queryset))
+        #print('queryset:'+str(queryset))
 
-        serializer = QuestionOneSerializer(queryset) 
-        print('serializer:'+str(serializer))
+        serializer = self.serializer_class(queryset) 
+        #print('serializer:'+str(serializer))
         
-
         self.save_obtain_question(serializer.data)
         serializer.data['answer'] = random.shuffle(serializer.data['answer'])#mezclamos las respuestas
-
         return Response(serializer.data)
-        
-        
-
+    
     #21-09
     def save_obtain_question(self,questionData):#aqui cristian soy tu yo del pasado, recuerda que aqui va pregunta obtenida, ya que en el metodo pre-paes se puede salir sin problemas, por lo tanto debemos guardarla pasa así saber de donde retornarla 17_08
         user = self.request.user#obtenemos el usuario actual 
@@ -680,93 +703,159 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
     
         #print(queryset)
         #Guardamos la convinación de la fase de prePAES y la pregunta
+        print('Question_data: '+str(questionData))
         serializer = PrePAESSaveQuestionSerializer(data={'pre_PAES':essaySerializer.data['id'],'question':questionData['id']}) 
-        serializer.is_valid()
-        serializer.save()
+        if(serializer.is_valid()):
+            serializer.save()
+        else:
+            return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
     
-        return True
+        return serializer.data
     
     def quitarRepeticionesUltimas2Respuestas(self, user):
 
         create_data = UserQuestionState.objects.filter(users_id = user.id).order_by('-created')[:2] #obtemos las preguntas ordenadas por orden de creación las ultimas primero
-        update_data = UserQuestionState.objects.filter(users_id = user.id).order_by('-updated')[:2] #obtemos las preguntas ordenadas por orden de modificacion las ultimas primero
+        idCreate = []      
+        for i in range(len(create_data)):
+            idCreate.append(create_data[i].question_id)
+        update_data = UserQuestionState.objects.filter(users_id = user.id).exclude(question_id__in=idCreate,created=F('updated')).order_by('-updated')[:2] #obtemos las preguntas ordenadas por orden de modificacion las ultimas primero
  
         todos_los_elementos = list(create_data) + list(update_data) #obtenemos las 2 ultimas creadas y modificadoas
-        todos_los_elementos.sort(key=lambda x: x.created if x.created else x.updated, reverse=True) #se ordena por la fecha mas actual primero para ver las utimas 2 contestadas
+        todos_los_elementos.sort(key=lambda x: max(x.created, x.updated), reverse=True) #mediante max identificamos para cada objeto cual es la fecha mayor y luego el arreglo se ordena
         questionState = []
-        questionState.extend(todos_los_elementos)
-
-        #print(todos_los_elementos)
-        if (todos_los_elementos != []):
-       
-            if (todos_los_elementos[0] == todos_los_elementos[1] and (len(todos_los_elementos) == 2)):
-                del questionState[1]
-            else:
-                for i in range(len(todos_los_elementos)): #eliminamos las preguntas repetidas
-                
-                    if(i == 0):
-                        if (todos_los_elementos[i] == todos_los_elementos[i+1]): #si la primera pregunta tambien es la segunda entonces eliminamos la segunda
-                            del questionState[i+1]
-                    else:
-                        if (todos_los_elementos[0] == todos_los_elementos[i]): 
-                            del questionState[i]
-            #en resumen dejamos las 2 preguntas contestadas recientemente, verificando que no sean las mismas
+        questionState.extend(todos_los_elementos[:2])
         
         return questionState
+   
+    def determinar_dificultad(self, categoria):
+        dificultad = PrePAESQuestion.objects.filter(question__type_question=categoria).order_by('-created').values_list('question__dificult').first()#identificamos la ultima pregunta contestada de prePAES de esa categoria
+       
+        if dificultad is not None:#esto implica que hay una pregunta contestada aun para esa categoria, mas especificamente la más reciente
+            return dificultad[0]#por lo que obtenemos la dificultad, en la que se encuentra
+        return 'Fácil'#si no ha contestado entonces se retorna Fácil
 
+    def categoriaAleatoria(self):
+        categoria = MathType.objects.order_by('?').values_list('id').first()
+        return categoria[0]
     
+    def determinar_aumentoDeDificultad(self,user, categoria, dificultad):
+
+        prePAESids = PrePAES.objects.filter(user = user).values_list('id')#para que al contar, solo cuente los del usuario actual, no los de los otros
+        count = PrePAESQuestion.objects.filter(question__type_question=categoria, question__dificult=dificultad, pre_PAES_id__in=prePAESids).count()#contamos si las preguntas contestadas para esa dificultad y categoria suman 3
+        if count % 3 == 0:
+            limit = 3 #solo debemos obtener 3
+            create_data = UserQuestionState.objects.filter(users_id = user.id, question__type_question=categoria, question__dificult = dificultad).order_by('-created')[:limit]#obtenemos las 
+            idCreate = []
+            
+            for i in range(len(create_data)):
+                idCreate.append(create_data[i].question_id)
+
+            update_data = UserQuestionState.objects.filter(users_id = user.id, question__type_question=categoria, question__dificult = dificultad).exclude(question_id__in=idCreate,created=F('updated')).order_by('-updated')[:limit]
+            todos_los_elementos = list(create_data) + list(update_data)#combinamos las listas
+            todos_los_elementos.sort(key=lambda x: max(x.created, x.updated), reverse=True) #mediante max identificamos para cada objeto cual es la fecha mayor y luego el arreglo se ordena
+            todos_los_elementos = todos_los_elementos[:limit]
+            
+            correcta = 0
+            reforzar = 0
+            print(categoria)
+            print(dificultad)
+            print(len(todos_los_elementos[:limit]))
+            print(todos_los_elementos)
+            
+            for i in range(len(todos_los_elementos[:limit])):
+                print('765:'+str(i))
+                if(todos_los_elementos[i].state == 'Reforzar'):
+                    reforzar+=1
+                elif(todos_los_elementos[i].state == 'Correcta'):
+                    correcta+=1
+
+            print((correcta/limit)*100)
+            print((reforzar/limit)*100)
+            if((correcta/limit)*100 >= 60 ):
+                return 1 #aumentar dificultad
+            elif((reforzar/limit)*100 >= 60 ):
+                return 2 #disminuir dificultad
+            else:
+                return 4 #para indicar que no se aumenta la dificultad y se debe retornar una pregunta aleatoria de la categoria y dificultad establecida
+        else:
+            return 4
+           
+
     def obtener_pregunta(self, user):
-    # Contadores de preguntas correctas y reforzar
 
-        #06-11 cristian recuerda esto, ahora debes impedir que alguna de las preguntas seleccionadas para refozar o correctas sean de las utlima 10 elegidas, ya que sino puede repetir hasta 5 veces la misma pregunta
+        numberState = UserQuestionState.objects.filter(users_id = user.id).count()
+        print('cantidad de estados'+str(numberState))
+        if(numberState == 0): #si inicia metodo prePAES entonces la primera preguta sera nueva y facil
+            return {"tipo":'nueva',"dificultad":'Facil',"flag":0}
+        else:
+            #categoria = 2#de prueba
 
-        allquestionsVerify = UserQuestionState.objects.filter(users_id = user.id) #las obtenemos todas para verificar cuantas preguntas hemos contestado hasta el momento en temas de correctas y erroneas
-        preguntas_correctas = sum(1 for pregunta in allquestionsVerify if pregunta.state == 'Correcta')
-        preguntas_erroneas = sum(1 for pregunta in allquestionsVerify if pregunta.state == 'Reforzar')
-
-        # Verificar si se han respondido al menos 3 preguntas erróneas y 3 preguntas para reforzar
-        if preguntas_correctas + preguntas_erroneas >= 6:
-
+            categoria = self.categoriaAleatoria()#definimos una categoria de manera aleatoria
+            dificultadActual = self.determinar_dificultad(categoria)#determinamos la dificultad actual de la categoria obtenida en base a la ultima pregunta constestada
+            aumento = self.determinar_aumentoDeDificultad(user, categoria, dificultadActual) #validar las 3 preguntas contestadas por esa categoria
+           
+            if aumento == 4:#
+                print(aumento)
+            else:
+                if(aumento == 1):#se aumenta la dificultad
+                    print(aumento)
+                    if(dificultadActual == 'Fácil'):
+                        dificultadActual = 'Media'
+                    elif(dificultadActual == 'Media'):
+                        dificultadActual = 'Difícil'
+                elif(aumento == 2):#se diminuye la dificultad
+                    print(aumento)
+                    if(dificultadActual == 'Media'):
+                        dificultadActual = 'Fácil'
+                    elif(dificultadActual == 'Difícil'):
+                        dificultadActual = 'Media'
+                #en caso de ser 3 la dificultad se mantiene
+            print('DIFICULTAD: '+str(dificultadActual))
             lastPrePAES = PrePAES.objects.filter(user = user).order_by('-created').first()#obtenemos el ultimo prePAES
             prePaesQuestion = PrePAESQuestion.objects.filter(pre_PAES = lastPrePAES).values_list('question_id', flat=True) #obtenemos todas las preguntas de este ultimo prePAES para evitar que obtenga preguntas repetidas en la misma
+            
+            if numberState >= 4:# a partir de 3 preguntas 
 
-            prePaesQuestion = PrePAESQuestion.objects.filter(pre_PAES = lastPrePAES).values_list('question_id', flat=True)
-            allquestionsObtain = UserQuestionState.objects.filter(users_id = user.id).exclude(question_id__in=prePaesQuestion)#quitamos las preguntas de la fase actual de prePAES
-            questionState = self.quitarRepeticionesUltimas2Respuestas(user)
-            ultimas_respuestas = [pregunta.state for pregunta in questionState] #verificamos en que estado se encuentran las utlimas 2 respuestas 
-            preguntas_list = []
-            print('705')
-            print(ultimas_respuestas)
-            # Probabilidad de cambiar una pregunta "correcta" a "reforzar" o "nueva"
-            if ultimas_respuestas == ['Correcta', 'Correcta'] and random.random() < 0.7:
-                # Cambiar una pregunta "correcta" a "reforzar"
+                questionState = self.quitarRepeticionesUltimas2Respuestas(user)#quitamos las prosibles preguntas repetidas
+                ultimas_respuestas = [pregunta.state for pregunta in questionState] #verificamos en que estado se encuentran las utlimas 2 respuestas 
+                preguntas_list = []
 
-                if (len(allquestionsObtain) != 0):
-                    preguntas_list = [pregunta for pregunta in allquestionsObtain if pregunta.state == 'Reforzar']
+                print('814')
+                print(ultimas_respuestas)
 
-                if len(preguntas_list) != 0: #si hay preguntas erroneas obtener alguna de ellas
-                    pregunta_seleccionada = random.choice(preguntas_list)
-                    return pregunta_seleccionada
-                else:#si no, obtener alguna nueva
-                    return 'nueva'
-                
-            if ultimas_respuestas == ['Reforzar', 'Reforzar'] and random.random() < 0.7:
-                # Cambiar una pregunta "errónea" a "correcta"
+                # Probabilidad de cambiar una pregunta "correcta" a "reforzar" o "nueva"
+                if ultimas_respuestas == ['Correcta', 'Correcta'] and random.random() < 0.7:
+                    # Cambiar una pregunta "correcta" a "reforzar"
+                    allquestionsObtain = UserQuestionState.objects.filter(users_id = user.id, question__dificult = dificultadActual, question__type_question=categoria).exclude(question_id__in=prePaesQuestion)#quitamos las preguntas de la fase actual de prePAES
 
-                if (len(allquestionsObtain) != 0):
-                    preguntas_list = [pregunta for pregunta in allquestionsObtain if pregunta.state == 'Correcta']
+                    if (len(allquestionsObtain) != 0):
+                        preguntas_list = [pregunta for pregunta in allquestionsObtain if pregunta.state == 'Reforzar']
 
-                if len(preguntas_list) != 0:
-                    pregunta_seleccionada = random.choice(preguntas_list)
-                    return pregunta_seleccionada
-                else:
-                    return 'nueva'
-            # Indicar que la pregunta debe ser nueva
-            return 'nueva'
-        else:
-            # Indicar que la pregunta debe ser nueva
-            return 'nueva'
-        
+                    if len(preguntas_list) != 0: #si hay preguntas erroneas obtener alguna de ellas
+                        pregunta_seleccionada = random.choice(preguntas_list)
+                        print('Correcta correcta entre')
+                        return pregunta_seleccionada
+                    else:#si no, obtener alguna nueva
+                        return {"tipo":"nueva","dificultad":dificultadActual,"categoria":categoria,"flag":1, "prePaesQuestion":prePaesQuestion}
+                    
+                if ultimas_respuestas == ['Reforzar', 'Reforzar'] and random.random() < 0.7:
+                    # Cambiar una pregunta "errónea" a "correcta"
+                    allquestionsObtain = UserQuestionState.objects.filter(users_id = user.id, question__dificult = dificultadActual, question__type_question=categoria).exclude(question_id__in=prePaesQuestion)#quitamos las preguntas de la fase actual de prePAES
+
+                    if (len(allquestionsObtain) != 0):
+                        preguntas_list = [pregunta for pregunta in allquestionsObtain if pregunta.state == 'Correcta']
+
+                    if len(preguntas_list) != 0:
+                        pregunta_seleccionada = random.choice(preguntas_list)
+                        print('Reforzar Reforzar entre')
+                        return pregunta_seleccionada
+                    else:
+                        return {"tipo":"nueva","dificultad":dificultadActual,"categoria":categoria,"flag":1, "prePaesQuestion":prePaesQuestion}
+                # Indicar que la pregunta debe ser nueva
+                return {"tipo":"nueva","dificultad":dificultadActual,"categoria":categoria,"flag":1, "prePaesQuestion":prePaesQuestion}
+            else:
+                # Indicar que la pregunta debe ser nueva
+                return {"tipo":"nueva","dificultad":dificultadActual,"categoria":categoria,"flag":1, "prePaesQuestion":prePaesQuestion}
 
 class UserPrePAESQuestionsListViews(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
@@ -783,7 +872,7 @@ class UserPrePAESQuestionsListViews(generics.ListAPIView):
             queryset = PrePAES.objects.filter(user = user, number_phase = fase).order_by('-created').first()
         return queryset # Devolver los ensayos prePAES del usuario
 
-    def list(self, request, **kwargs):
+    def list(self, request, **kwargs):#devolvemos la lista de pregunta de la fase actual solo con su estado de correcta o incorrecta
         queryset = self.get_queryset()
         data = []
         indiceDatos = 0
@@ -794,7 +883,7 @@ class UserPrePAESQuestionsListViews(generics.ListAPIView):
                 data.append(serializer.data)
                 for j in range(len(data[indiceDatos]['user_answer'])):#se ocupa eñ estadp ya que úede haber más preguntas que respúestas, ya que puede llegar a obtener una nueva pero no la constesta
                     
-                    print(data[indiceDatos])
+                    
                     data[indiceDatos]['user_PrePAES'][j]['answer_state'] = data[indiceDatos]['user_answer'][j]['answer_state']
                     data[indiceDatos]['user_PrePAES'][j]['answer_id'] = data[indiceDatos]['user_answer'][j]['answer_id']
 

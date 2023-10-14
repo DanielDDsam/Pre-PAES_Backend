@@ -114,19 +114,19 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 
 DATABASES = {
 
-        'default': dj_database_url.config(
+        #'default': dj_database_url.config(
             #Feel free to alter this value to suit your needs.
-            default='postgresql://postgres:postgres@localhost:5432/mysite',
-            conn_max_age=600
-        ) 
-        #'default': {
-         #   'ENGINE': 'django.db.backends.mysql',
-          #  'NAME': 'mathia_final',
-           # 'USER': 'cristian',
-            #'PASSWORD': 'root',
-            #'HOST': 'localhost',
-            #'PORT': '3306'
-        #}
+         #   default='postgresql://postgres:postgres@localhost:5432/mysite',
+          #  conn_max_age=600
+        #) 
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': 'prepaes',
+            'USER': 'cristian',
+            'PASSWORD': 'root',
+            'HOST': 'localhost',
+            'PORT': '3306'
+        }
 
     }
 
@@ -197,6 +197,6 @@ DJANGO_REST_LOOKUP_FIELD = 'username'
 EMAIL_BACKEND="django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
-EMAIL_HOST_USER = '@gmail.com'
-EMAIL_HOST_PASSWORD = ''
+EMAIL_HOST_USER = 'prepaesu@gmail.com'
+EMAIL_HOST_PASSWORD = 'zzcc efxh lcit gszj'
 EMAIL_USE_TLS = True
