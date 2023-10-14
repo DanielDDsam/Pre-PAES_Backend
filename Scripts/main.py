@@ -1,1 +1,1 @@
-exec(open('Scripts/script.py', encoding="utf8").read())
+#exec(open('Scripts/script.py', encoding="utf8").read())
