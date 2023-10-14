@@ -764,6 +764,8 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
             print(dificultad)
             print(len(todos_los_elementos[:limit]))
             print(todos_los_elementos)
+            print(create_data)
+            print(update_data)
             
             for i in range(len(todos_los_elementos[:limit])):
                 print('765:'+str(i))
