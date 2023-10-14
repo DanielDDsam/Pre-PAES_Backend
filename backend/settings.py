@@ -121,7 +121,7 @@ DATABASES = {
         ) 
         #'default': {
          #   'ENGINE': 'django.db.backends.mysql',
-          #  'NAME': 'mathia_final',
+          #  'NAME': 'prepaes',
            # 'USER': 'cristian',
             #'PASSWORD': 'root',
             #'HOST': 'localhost',
@@ -197,6 +197,6 @@ DJANGO_REST_LOOKUP_FIELD = 'username'
 EMAIL_BACKEND="django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
-EMAIL_HOST_USER = '@gmail.com'
-EMAIL_HOST_PASSWORD = ''
+EMAIL_HOST_USER = 'prepaesu@gmail.com'
+EMAIL_HOST_PASSWORD = 'zzcc efxh lcit gszj'
 EMAIL_USE_TLS = True
