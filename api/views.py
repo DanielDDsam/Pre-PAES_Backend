@@ -789,7 +789,7 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
         numberState = UserQuestionState.objects.filter(users_id = user.id).count()
         print('cantidad de estados'+str(numberState))
         if(numberState == 0): #si inicia metodo prePAES entonces la primera preguta sera nueva y facil
-            return {"tipo":'nueva',"dificultad":'Facil',"flag":0}
+            return {"tipo":'nueva',"dificultad":'Fácil',"flag":0}
         else:
             #categoria = 2#de prueba
 
