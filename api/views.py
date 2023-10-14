@@ -651,8 +651,11 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
             queryset = Question.objects.filter(id=data.question_id).first() #si es reforzar o correcta la obtenemos 
         else:
             if data['flag'] == 0:
+                print('0')
                 queryset = Question.objects.filter(dificult = data['dificultad']).order_by('?').first() #retornamos una pregunta inicial que sea de dificultad facil y de cualquier categoria
+                print(queryset)
             elif data['flag'] == 1:
+                print('1')
                 queryset = Question.objects.filter(dificult = data['dificultad'], type_question_id = data['categoria']).exclude(id__in = UserQuestionState_ids).order_by('?').first() #retornamos una pregunta nueva que no sea una de las ya contestadas y respetando la dificultad y categoria
                 print('651'+str(queryset))
                 if(queryset is None):#si ya no quedan nuevas preguntas per dificultad o categoria, entonces saldra una al alzar repetando lo ultimo y evitan la repetición de alguna de las que ya se encuentran en la fase actual de prePAES
@@ -684,10 +687,10 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
     def list(self, request):
         # Note the use of `get_queryset()` instead of `self.queryset`
         queryset = self.get_queryset()
-        #print('queryset:'+str(queryset))
+        print('queryset:'+str(queryset))
 
         serializer = self.serializer_class(queryset) 
-        #print('serializer:'+str(serializer))
+        print('serializer:'+str(serializer))
         
         self.save_obtain_question(serializer.data)
         serializer.data['answer'] = random.shuffle(serializer.data['answer'])#mezclamos las respuestas
