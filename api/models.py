@@ -8,10 +8,19 @@ from django.contrib.auth.models import (
 
 common_args = {'null': True, 'blank': True} #atributos generales que tienen que tener
 
+class DateTimeSecondsField(models.DateTimeField):
+    def db_type(self, connection):
+        return 'timestamp'
+
+    def from_db_value(self, value, expression, connection):
+        if value is not None:
+            return value.replace(microsecond=0)
+        return value
+
 #Clase abstracta para que todas las clases que hereden de ella tengan los mismos atributos
 class GenericAttributes(models.Model):
-    created = models.DateTimeField(**common_args, auto_now_add=True, editable=False)  # para saber cuando fue creado el dato
-    updated = models.DateTimeField(**common_args, auto_now=True) # para saber cuando se actualizo el dato
+    created = DateTimeSecondsField(**common_args, auto_now_add=True, editable=False)  # para saber cuando fue creado el dato
+    updated = DateTimeSecondsField(**common_args, auto_now=True) # para saber cuando se actualizo el dato
     is_deleted = models.BooleanField(**common_args, default=False) #para un borrado logico de las vistas no borrado fisico de la bd
 
     class Meta:
@@ -121,7 +130,7 @@ class TypesEssayCustom(GenericAttributes):
 class Question(GenericAttributes):
     question = models.TextField(**common_args)
     subject = models.TextField(**common_args)
-    link_resolution = models.URLField(**common_args, unique=True)
+    link_resolution = models.URLField(**common_args)
     type_question = models.ForeignKey(MathType, **common_args,on_delete=models.CASCADE, related_name='question_type')
     users = models.ManyToManyField(Users, blank=True, through='UserQuestionState', related_name='question_user') #18-07
     dificult = models.TextField(**common_args)
