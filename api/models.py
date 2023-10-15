@@ -14,13 +14,15 @@ class DateTimeSecondsField(models.DateTimeField):
 
     def from_db_value(self, value, expression, connection):
         if value is not None:
-            return value.replace(microsecond=0)
+            value.replace(microsecond=0)
+            value.strftime('%Y-%m-%d %H:%M:%S')
+            return value
         return value
 
 #Clase abstracta para que todas las clases que hereden de ella tengan los mismos atributos
 class GenericAttributes(models.Model):
-    created = models.DateTimeField(**common_args, auto_now_add=True, editable=False)  # para saber cuando fue creado el dato
-    updated = models.DateTimeField(**common_args, auto_now=True) # para saber cuando se actualizo el dato
+    created = DateTimeSecondsField(**common_args, auto_now_add=True, editable=False)  # para saber cuando fue creado el dato
+    updated = DateTimeSecondsField(**common_args, auto_now=True) # para saber cuando se actualizo el dato
     is_deleted = models.BooleanField(**common_args, default=False) #para un borrado logico de las vistas no borrado fisico de la bd
 
     class Meta:
