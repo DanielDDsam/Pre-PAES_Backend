@@ -12,7 +12,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models.functions import Random
 import random
 import math
-from django.db.models import F
+from datetime import datetime
 # Create your views here.
 
 #funcion para obtener jwt para el usuario cuando hace login
@@ -716,15 +716,22 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
         return serializer.data
     
     def quitarRepeticionesUltimas2Respuestas(self, user):
+        
+        idCreate = []  
 
         create_data = UserQuestionState.objects.filter(users_id = user.id).order_by('-created')[:2] #obtemos las preguntas ordenadas por orden de creación las ultimas primero
-        idCreate = []      
         for i in range(len(create_data)):
             idCreate.append(create_data[i].question_id)
-        update_data = UserQuestionState.objects.filter(users_id = user.id).exclude(question_id__in=idCreate,created=F('updated')).order_by('-updated')[:2] #obtemos las preguntas ordenadas por orden de modificacion las ultimas primero
- 
+            create_data[i].updated = 0
+            print('fecha up:'+str(create_data[i].updated))
+
+        update_data = UserQuestionState.objects.filter(users_id = user.id).exclude(question_id__in=idCreate,is_modify=False).order_by('-updated')[:2] #obtemos las preguntas ordenadas por orden de modificacion las ultimas primero
+        for i in range(len(update_data)):
+            update_data[i].created = 0
+            print('fecha cre:'+str(update_data[i].created))
+
         todos_los_elementos = list(create_data) + list(update_data) #obtenemos las 2 ultimas creadas y modificadoas
-        todos_los_elementos.sort(key=lambda x: max(x.created, x.updated), reverse=True) #mediante max identificamos para cada objeto cual es la fecha mayor y luego el arreglo se ordena
+        todos_los_elementos.sort(key=lambda x: x.created if isinstance(x.created, datetime) else x.updated, reverse=True) #mediante max identificamos para cada objeto cual es la fecha mayor y luego el arreglo se ordena
         questionState = []
         questionState.extend(todos_los_elementos[:2])
         
@@ -744,19 +751,27 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
     def determinar_aumentoDeDificultad(self,user, categoria, dificultad):
 
         prePAESids = PrePAES.objects.filter(user = user).values_list('id')#para que al contar, solo cuente los del usuario actual, no los de los otros
+        print(prePAESids)
         count = PrePAESQuestion.objects.filter(question__type_question=categoria, question__dificult=dificultad, pre_PAES_id__in=prePAESids).count()#contamos si las preguntas contestadas para esa dificultad y categoria suman 3
-        if count % 3 == 0:
+        print('cuenta :'+str(count))
+        if count % 3 == 0 and count != 0:
             limit = 3 #solo debemos obtener 3
             create_data = UserQuestionState.objects.filter(users_id = user.id, question__type_question=categoria, question__dificult = dificultad).order_by('-created')[:limit]#obtenemos las 
             idCreate = []
             
             for i in range(len(create_data)):
                 idCreate.append(create_data[i].question_id)
-                print('fecha :'+str(create_data[i].created))
+                create_data[i].updated = 0
+                print('fecha up:'+str(create_data[i].updated))
 
-            update_data = UserQuestionState.objects.filter(users_id = user.id, question__type_question=categoria, question__dificult = dificultad).exclude(question_id__in=idCreate,created=F('updated')).order_by('-updated')[:limit]
+            update_data = UserQuestionState.objects.filter(users_id = user.id, question__type_question=categoria, question__dificult = dificultad).exclude(question_id__in=idCreate, is_modify=False).order_by('-updated')[:limit]
+            
+            for i in range(len(update_data)):
+                update_data[i].created = 0
+                print('fecha cre:'+str(update_data[i].created))
+            
             todos_los_elementos = list(create_data) + list(update_data)#combinamos las listas
-            todos_los_elementos.sort(key=lambda x: max(x.created, x.updated), reverse=True) #mediante max identificamos para cada objeto cual es la fecha mayor y luego el arreglo se ordena
+            todos_los_elementos.sort(key=lambda x: x.created if isinstance(x.created, datetime) else x.updated, reverse=True) #mediante max identificamos para cada objeto cual es la fecha mayor y luego el arreglo se ordena
             todos_los_elementos = todos_los_elementos[:limit]
             
             correcta = 0
@@ -815,6 +830,7 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
                         dificultadActual = 'Media'
                 #en caso de ser 3 la dificultad se mantiene
             print('DIFICULTAD: '+str(dificultadActual))
+            print('CATEGORIA: '+str(categoria))
             lastPrePAES = PrePAES.objects.filter(user = user).order_by('-created').first()#obtenemos el ultimo prePAES
             prePaesQuestion = PrePAESQuestion.objects.filter(pre_PAES = lastPrePAES).values_list('question_id', flat=True) #obtenemos todas las preguntas de este ultimo prePAES para evitar que obtenga preguntas repetidas en la misma
             

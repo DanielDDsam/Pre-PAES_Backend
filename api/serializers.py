@@ -836,16 +836,15 @@ class SaveUserQuestionState(serializers.Serializer): #18-07
             instance = get_object_or_404(UserQuestionState, question=question, users=user) #si existe obtenemos la instancia
             print(instance)
             if answer.right == 0:
-                dateF = timezone.now().replace(microsecond=0)
-                instance.updated = dateF.strftime('%Y-%m-%d %H:%M:%S')
-                print(instance.updated)
+                #dateF = timezone.now().replace(microsecond=0)
+                #instance.updated = dateF.strftime('%Y-%m-%d %H:%M:%S')
+                #print(instance.updated)
                 instance.state = 'Reforzar'
+                instance.is_modify = True
                 instance.save()#guardamos el cambio, esto permite modificar el campo update
             else:
-                dateF = timezone.now().replace(microsecond=0)
-                instance.updated = dateF.strftime('%Y-%m-%d %H:%M:%S')
-                print(instance.updated)
                 instance.state = 'Correcta'
+                instance.is_modify = True
                 instance.save()#guardamos el cambio, esto permite modificar el campo update
         else:#si no existe creamos una instancia
             dateF = timezone.now().replace(microsecond=0)
