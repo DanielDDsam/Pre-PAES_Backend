@@ -148,6 +148,7 @@ class UserQuestionState(GenericAttributes): #18-07
     question = models.ForeignKey(Question, **common_args, on_delete=models.CASCADE,related_name='user_question_state')
     users = models.ForeignKey(Users, **common_args, on_delete=models.CASCADE, related_name='user_question_state')
     state = models.TextField(**common_args)
+    is_modify = models.BooleanField(**common_args, default=False)
 
 
 # Clase del modelo CustomEssayQuestion #21-09-2023
