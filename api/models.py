@@ -19,8 +19,8 @@ class DateTimeSecondsField(models.DateTimeField):
 
 #Clase abstracta para que todas las clases que hereden de ella tengan los mismos atributos
 class GenericAttributes(models.Model):
-    created = DateTimeSecondsField(**common_args, auto_now_add=True, editable=False)  # para saber cuando fue creado el dato
-    updated = DateTimeSecondsField(**common_args, auto_now=True) # para saber cuando se actualizo el dato
+    created = models.DateTimeField(**common_args, auto_now_add=True, editable=False)  # para saber cuando fue creado el dato
+    updated = models.DateTimeField(**common_args, auto_now=True) # para saber cuando se actualizo el dato
     is_deleted = models.BooleanField(**common_args, default=False) #para un borrado logico de las vistas no borrado fisico de la bd
 
     class Meta:
