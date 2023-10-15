@@ -847,10 +847,11 @@ class SaveUserQuestionState(serializers.Serializer): #18-07
                 instance.save()#guardamos el cambio, esto permite modificar el campo update
         else:#si no existe creamos una instancia
             if answer.right == 0:
-                print(timezone.now().replace(microsecond=0))
-                instance = UserQuestionState.objects.create(question=question, users=user,state='Reforzar',created=timezone.now().replace(microsecond=0),updated=timezone.now().replace(microsecond=0))
+                date = timezone.now().replace(microsecond=0)
+                print(date)
+                instance = UserQuestionState.objects.create(question=question, users=user,state='Reforzar',created=date,updated=date)
             else:
-                instance = UserQuestionState.objects.create(question=question, users=user,state='Correcta',created=timezone.now().replace(microsecond=0),updated=timezone.now().replace(microsecond=0))
+                instance = UserQuestionState.objects.create(question=question, users=user,state='Correcta',created=date,updated=date)
         return instance
 
 
