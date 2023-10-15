@@ -752,6 +752,7 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
             
             for i in range(len(create_data)):
                 idCreate.append(create_data[i].question_id)
+                print('fecha :'+str(create_data[i].created))
 
             update_data = UserQuestionState.objects.filter(users_id = user.id, question__type_question=categoria, question__dificult = dificultad).exclude(question_id__in=idCreate,created=F('updated')).order_by('-updated')[:limit]
             todos_los_elementos = list(create_data) + list(update_data)#combinamos las listas
