@@ -7,6 +7,7 @@ from django.utils.encoding import smart_str, force_bytes, DjangoUnicodeDecodeErr
 from django.shortcuts import get_object_or_404
 from django.core.mail import send_mail, get_connection
 from backend.settings import EMAIL_HOST_USER
+from django.utils import timezone
 
 generic_fields = ['created', 'updated', 'is_deleted']
 
@@ -835,17 +836,18 @@ class SaveUserQuestionState(serializers.Serializer): #18-07
             instance = get_object_or_404(UserQuestionState, question=question, users=user) #si existe obtenemos la instancia
             print(instance)
             if answer.right == 0:
-
+                instance.updated = timezone.now().replace(microsecond=0)
                 instance.state = 'Reforzar'
                 instance.save()#guardamos el cambio, esto permite modificar el campo update
             else:
+                instance.updated = timezone.now().replace(microsecond=0)
                 instance.state = 'Correcta'
                 instance.save()#guardamos el cambio, esto permite modificar el campo update
         else:#si no existe creamos una instancia
             if answer.right == 0:
-                instance = UserQuestionState.objects.create(question=question, users=user,state='Reforzar')
+                instance = UserQuestionState.objects.create(question=question, users=user,state='Reforzar',created=timezone.now().replace(microsecond=0),updated=timezone.now().replace(microsecond=0))
             else:
-                instance = UserQuestionState.objects.create(question=question, users=user,state='Correcta')
+                instance = UserQuestionState.objects.create(question=question, users=user,state='Correcta',created=timezone.now().replace(microsecond=0),updated=timezone.now().replace(microsecond=0))
         return instance
 
 
