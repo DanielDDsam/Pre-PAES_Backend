@@ -8,6 +8,15 @@ from django.contrib.auth.models import (
 
 common_args = {'null': True, 'blank': True} #atributos generales que tienen que tener
 
+class DateTimeSecondsField(models.DateTimeField):
+    def db_type(self, connection):
+        return 'timestamp'
+
+    def from_db_value(self, value, expression, connection):
+        if value is not None:
+            return value.replace(microsecond=0)
+        return value
+
 #Clase abstracta para que todas las clases que hereden de ella tengan los mismos atributos
 class GenericAttributes(models.Model):
     created = models.DateTimeField(**common_args, auto_now_add=True, editable=False)  # para saber cuando fue creado el dato
