@@ -1007,36 +1007,27 @@ class stadisticsPrePAESView(generics.ListAPIView):
         }
 
         return most_common_state
+    
+    def determinar_dificultades(self):
+
+        categorias = MathType.objects.filter()
+        dificultades = {}
+        for categoria in categorias:
+            data = PrePAESQuestion.objects.filter(question__type_question=categoria.id).order_by('-created').values_list('question__dificult').first()#identificamos la ultima pregunta contestada de prePAES de esa categoria 
+
+            if(data is not None):
+                dificultades[categoria.type] = data[0]
+            else:
+                dificultades[categoria.type] = 'Facil'
+
+        return dificultades
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         serializer = self.serializer_class(queryset, many=True)
         most_common_subjects = self.stateMAX(serializer)
         most_common_state = self.stateDificult(serializer)
-        dificult_subjects = {}
-        j = 0
-        print('data :'+str(most_common_state))
-        for i in most_common_state:
-            
-            reforzar = most_common_state[i].get('Reforzar')
-            correcta = most_common_state[i].get('Correcta')
-            keys = list(most_common_state.keys())
-            print(keys[j])
-            print(j)
-
-            if reforzar is None:
-                dificult_subjects[keys[j]] = 'Dificil'
-            elif correcta is None:
-                dificult_subjects[keys[j]] = 'Facil'
-            else:
-                if reforzar > correcta:
-                    dificult_subjects[keys[j]] = 'Facil'
-                if reforzar < correcta:
-                    dificult_subjects[keys[j]] = 'Dificil'
-                if reforzar == correcta:
-                    dificult_subjects[keys[j]] = 'Intermedio'        
-            
-            j+=1
+        dificult_subjects = self.determinar_dificultades()
                
         data = []
         data.append(most_common_subjects)
