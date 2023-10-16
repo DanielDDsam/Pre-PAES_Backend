@@ -737,8 +737,9 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
         
         return questionState
    
-    def determinar_dificultad(self, categoria):
-        dificultad = PrePAESQuestion.objects.filter(question__type_question=categoria).order_by('-created').values_list('question__dificult').first()#identificamos la ultima pregunta contestada de prePAES de esa categoria
+    def determinar_dificultad(self, categoria, user):
+        prePAESids = PrePAES.objects.filter(user = user).values_list('id')#para que al contar, solo cuente los del usuario actual, no los de los otros
+        dificultad = PrePAESQuestion.objects.filter(question__type_question=categoria, pre_PAES_id__in=prePAESids).order_by('-created').values_list('question__dificult').first()#identificamos la ultima pregunta contestada de prePAES de esa categoria
        
         if dificultad is not None:#esto implica que hay una pregunta contestada aun para esa categoria, mas especificamente la más reciente
             return dificultad[0]#por lo que obtenemos la dificultad, en la que se encuentra
@@ -810,7 +811,7 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
             #categoria = 2#de prueba
 
             categoria = self.categoriaAleatoria()#definimos una categoria de manera aleatoria
-            dificultadActual = self.determinar_dificultad(categoria)#determinamos la dificultad actual de la categoria obtenida en base a la ultima pregunta constestada
+            dificultadActual = self.determinar_dificultad(categoria, user)#determinamos la dificultad actual de la categoria obtenida en base a la ultima pregunta constestada
             aumento = self.determinar_aumentoDeDificultad(user, categoria, dificultadActual) #validar las 3 preguntas contestadas por esa categoria
            
             if aumento == 4:#
@@ -1013,7 +1014,9 @@ class stadisticsPrePAESView(generics.ListAPIView):
         categorias = MathType.objects.filter()
         dificultades = {}
         for categoria in categorias:
-            data = PrePAESQuestion.objects.filter(question__type_question=categoria.id).order_by('-created').values_list('question__dificult').first()#identificamos la ultima pregunta contestada de prePAES de esa categoria 
+            user = self.request.user
+            prePAESids = PrePAES.objects.filter(user = user).values_list('id')#para que al contar, solo cuente los del usuario actual, no los de los otros
+            data = PrePAESQuestion.objects.filter(question__type_question=categoria, pre_PAES_id__in=prePAESids).order_by('-created').values_list('question__dificult').first()#identificamos la ultima pregunta contestada de prePAES de esa categoria
 
             if(data is not None):
                 dificultades[categoria.type] = data[0]
