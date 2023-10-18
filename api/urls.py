@@ -37,9 +37,11 @@ urlpatterns = [
 
     re_path(r'^questions_alternativeSpecific/(?P<pk>[0-9]+)/$', views.questionAnswers.as_view()),#endpoint para consultar por una pregunta y alternativas
     re_path(r'^question_oneQuestion/$', views.oneQuestion.as_view()),#endpoint para consultar una sola pregunta
-    re_path(r'^question_oneQuestionRules/$', views.oneQuestionRules.as_view()),#endpoint para consultar una sola pregunta en base a las reglas establecidas
-    
+    re_path(r'^question_oneQuestionRules/$', views.oneQuestionRules.as_view()),#endpoint para consultar una sola pregunta en base a las reglas establecidas   
     re_path(r'^questions_alternative/$', views.QuestionsAlternativeAllView.as_view()),#Endpoint para consultar todas las preguntas y alternativas de un ensayo específico
+    re_path(r'^questions_error/$', views.questionErrorListCreateView.as_view()),#Endpoint para consultar todas las preguntas y alternativas de un ensayo específico
+    re_path(r'^questions_error/admin/(?P<pk>[0-9]+)/$', views.questionErrorRetrieveUpdateDestroyView.as_view()),#Endpoint para consultar todas las preguntas y alternativas de un ensayo específico
+
 
     re_path(r'^score_user/all/$', views.AnswerEssayUserView.as_view()),#Endpoint para obtener el puntaje del usuario
     re_path(r'^submit_answers/$', views.SaveAnswersView.as_view()),#Endpoint para guardar las respuestas del usuario

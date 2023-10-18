@@ -39,7 +39,6 @@ class UsersListCreate(generics.ListCreateAPIView):
 class RegisterView(APIView):
     def post(self, request):
         serializer = RegistrationSerializer(data=request.data)  # Serializador utilizado para validar y procesar los datos del formulario
-        print(serializer)
         if serializer.is_valid():
             serializer.save()  # Guarda los datos del nuevo usuario en la base de datos
             return Response(serializer.data, status=status.HTTP_201_CREATED)  # Retorna los datos del usuario registrado en la respuesta con un código de estado 201 (CREATED)
@@ -48,7 +47,6 @@ class RegisterView(APIView):
 class RegisterAdminView(APIView):
     def post(self, request):
         serializer = RegistrationAdminSerializer(data=request.data)  # Serializador utilizado para validar y procesar los datos del formulario
-        print('hola')
         if serializer.is_valid():
             serializer.save()  # Guarda los datos del nuevo usuario en la base de datos
             return Response({'message':'admin created', 'data':serializer.data}, status=status.HTTP_201_CREATED)  # Retorna los datos del usuario registrado en la respuesta con un código de estado 201 (CREATED)
@@ -122,7 +120,6 @@ class SendPasswordResetEmailView(APIView):
     renderer_classes = [UserRenderer]  # Clase de renderizado utilizada para la vista
 
     def post(self, request, format=None):
-        print('124'+str(request.data))
         serializer = SendPasswordResetEmailSerializer(data=request.data)  # Serializador utilizado para validar y procesar los datos del formulario
         serializer.is_valid(raise_exception=True)  # Valida los datos y lanza una excepción si no son válidos
         return Response({'msg': 'Link para reiniciar contraseña enviado'}, status=status.HTTP_200_OK)  # Retorna un mensaje de éxito en la respuesta
@@ -132,8 +129,6 @@ class UserPasswordResetView(APIView):
     renderer_classes = [UserRenderer]  # Clase de renderizado utilizada para la vista
 
     def post(self, request, uid, token, format=None):
-        print('134'+str(self.kwargs.get('uid')))
-        print('135'+str(self.kwargs.get('uid')))
         serializer = UserPasswordResetSerializer(data=request.data, context={'uid':uid,'token':token})  # Serializador utilizado para validar y procesar los datos del formulario
         serializer.is_valid(raise_exception=True)  # Valida los datos y lanza una excepción si no son válidos
         return Response({'msg':'Cambio de contraseña exitoso'}, status=status.HTTP_200_OK)  # Retorna un mensaje de éxito en la respuesta
@@ -262,7 +257,7 @@ class CustomEssayView(generics.CreateAPIView):
     queryset = CustomEssay.objects.filter(is_deleted=False)  # Consulta para obtener los ensayos personalizados que no han sido eliminados
     serializer_class = CustomEssaySerializer  # Clase serializadora utilizada
 
-    def perform_create(self, serializer):
+    def perform_create(self, serializer):#perform_create ya paso la validación
         custom_essay = serializer.save()  # Guardar el ensayo personalizado
         response_data = {'id': custom_essay.id, 'message': 'CustomEssay creado exitosamente.'}
         return Response(response_data, status=status.HTTP_201_CREATED)  # Devolver una respuesta exitosa
@@ -1039,3 +1034,27 @@ class stadisticsPrePAESView(generics.ListAPIView):
 
         return Response(data, status=status.HTTP_200_OK)
     
+class questionErrorListCreateView(generics.ListCreateAPIView):
+    permission_classes = [IsAuthenticated]
+    queryset = QuestionError.objects.filter(is_deleted = False).order_by('pk')
+    serializer_class = QuestionErrorSerializer
+
+    def list(self, request, *args, **kwargs):
+
+        print(self.request.user.is_admin)
+        if (self.request.user.is_admin == True):
+            queryset = self.get_queryset()
+            serializer = self.serializer_class(queryset, many = True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response({"message":"Acceso disponible solo a usuario administrador"}, status=status.HTTP_401_UNAUTHORIZED)  # Retorna los errores de validación en la respuesta con un código de estado 400 (BAD REQUEST)
+
+class questionErrorRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAuthenticated]
+    queryset = QuestionError.objects.filter(is_deleted = False).order_by('pk')
+    serializer_class = QuestionErrorSerializer
+
+    
+    
+    
+

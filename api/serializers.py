@@ -418,8 +418,8 @@ class UserEssayHistorySerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
         data['time_essay'] = self.get_time(instance)  # Incluir el tiempo empleado en el ensayo en la representación
-        data['puntaje'] = self.get_score(instance) 
-        print(data) # Incluir el puntaje obtenido en la representación
+        data['puntaje'] = self.get_score(instance) # Incluir el puntaje obtenido en la representación
+        print(data) 
         # Verificar si hay registros en AnswerEssayUser para el CustomEssay actual
         has_answer_essay_user = AnswerEssayUser.objects.filter(essays=instance).exists()
         if not has_answer_essay_user:
@@ -879,3 +879,9 @@ class StadisticsPrePAESSerializer(serializers.ModelSerializer):
         data.pop('question') 
 
         return data
+
+class QuestionErrorSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = QuestionError
+        exclude = [*generic_fields]
