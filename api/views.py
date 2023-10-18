@@ -1016,7 +1016,7 @@ class stadisticsPrePAESView(generics.ListAPIView):
             if(data is not None):
                 dificultades[categoria.type] = data[0]
             else:
-                dificultades[categoria.type] = 'Facil'
+                dificultades[categoria.type] = 'Fácil'
 
         return dificultades
 
