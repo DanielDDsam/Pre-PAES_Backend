@@ -69,10 +69,10 @@ urlpatterns = [
     re_path(r'^recent_essay/(?P<pk>[0-9]+)/$', views.CustomEssayMostRecentView.as_view()),#Endpoint para consultar el ensayo más reciente
     re_path(r'^recent_essay_resume/(?P<pk>[0-9]+)/$', views.CustomEssayMostRecentResumeView.as_view()),#Endpoint para consultar los ultimos 5 ensayos
 
-    re_path(r'^achievment/$', views.achievmentListCreateView.as_view()),#Endpoint para crear y listar logros
+    re_path(r'^achievment/$', views.achievmentListCreateView.as_view()),#Endpoint para crear y listar logros de un usuario
     re_path(r'^achievment/(?P<pk>[0-9]+)/$', views.achievmenRetrieveUpdateDestroyView.as_view()),#Endpoint para modificar, eliminar y retornar solo uno logro
     re_path(r'^achievment_user/create/$', views.UserAchievmentCreateView.as_view()),#Endpoint para asociar un logro a un usuario
-    re_path(r'^achievment_user/$', views.UserAchievmentListView.as_view()),#Endpoint para modificar, eliminar y retornar solo uno logro
+    re_path(r'^achievment_user/$', views.UserAchievmentListView.as_view()),#Endpoint para retornar todos los logros de un usuario
 
 
     re_path(r'^home/$', views.falseCharge.as_view()),#Endpoint para peticion falsa

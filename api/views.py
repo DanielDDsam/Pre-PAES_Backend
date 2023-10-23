@@ -1112,9 +1112,39 @@ class UserAchievmentListView(generics.ListAPIView):
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         if(len(queryset) == 0):
-            return Response({"message":"El usuario no posee logros"}, status=status.HTTP_204_NO_CONTENT)
+            return Response({"message":"El usuario no posee logros"}, status=status.HTTP_204_NO_CONTENT) 
         serializer = self.serializer_class(queryset, many = True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+        data = []
+
+        achievmentData = Achievement.objects.all()
+        achievmentSerializer = AchievmentSerializer(achievmentData, many = True)
+        
+        for i in range(len(achievmentData)):
+            for j in range(len(queryset)):
+                if(achievmentData[i].id == queryset[j].achievement.id):
+                    serializer.data[j]['data'] = True
+                    data.append(serializer.data[j])
+
+        flag = True
+        for i in range(len(achievmentData)):#logros
+
+            for j in range(len(queryset)):# logros usuario
+                if(achievmentData[i].id == queryset[j].achievement.id):#si ya lo tiene rompe el ciclo actual 
+                    flag = False
+                    break
+            
+            if(flag == True):
+                achievmentSerializer.data[i]['data'] = False
+                data.append(achievmentSerializer.data[i])
+                flag = True
+
+        print(data)
+        
+        return Response(data, status=status.HTTP_200_OK)
+    
+
         
     
 

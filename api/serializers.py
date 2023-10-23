@@ -493,8 +493,9 @@ class CustomEssaySerializer(serializers.ModelSerializer):
             TypesEssayCustom.objects.create(type_essays=type_essays, custom_essay=custom_essay)
 
         count = CustomEssay.objects.filter(is_custom = True, user = self.context['request'].user).count()
-        if (count == 1):
-            achievemet = Achievement.objects.filter(name = 'Creador de Ensayos').first()
+        achievemet = Achievement.objects.filter(name = 'Creador de Ensayos').first()
+        achievmentFirstCustom = UserAchievement.objects.filter(user=self.context['request'].user, achievement=achievemet)
+        if (count == 1 and achievmentFirstCustom is None):
             UserAchievement.objects.create(user=self.context['request'].user, achievement=achievemet)
 
 
