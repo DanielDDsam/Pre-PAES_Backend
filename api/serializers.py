@@ -317,6 +317,24 @@ class SaveAnswersSerializer(serializers.Serializer):
         #     raise serializers.ValidationError('Respuestas no válidas.')
 
         return data
+    
+    def validateAchievements(self, maxpoint, answer_ids, user):
+
+        achievemetFirst = Achievement.objects.filter(name = 'Mi primer ensayo').first()
+        userAchievementFirstEssay = UserAchievement.objects.filter(user=user, achievement=achievemetFirst).first()
+
+        achievementMax = Achievement.objects.filter(name = 'Excelencia en Matemáticas').first()
+        userAchievementMax = UserAchievement.objects.filter(user=user, achievement=achievementMax).first()
+        print(userAchievementFirstEssay)
+        print(userAchievementMax)
+        print(maxpoint)
+        print(len(answer_ids))
+        if(userAchievementFirstEssay is None):
+            UserAchievement.objects.create(user=user, achievement=achievemetFirst)#relacionado al primer logro que es por realizar un método ensayo
+
+        if (userAchievementMax is None and maxpoint == len(answer_ids)):
+            UserAchievement.objects.create(user=user, achievement=achievementMax)#relacionado al primer logro que es por realizar un método ensayo
+
 
     def create(self, validated_data):
         answer_ids = validated_data.get('answer_ids')
@@ -327,7 +345,7 @@ class SaveAnswersSerializer(serializers.Serializer):
         user_essay = get_object_or_404(CustomEssay, pk=user_essay_id)
         user = self.context['request'].user
         essay_answers = []
-
+        maxpoint = 0
         # Crear objetos AnswerEssayUser para cada respuesta seleccionada
         for answer_id in answer_ids:
             answer = get_object_or_404(Answer, pk=answer_id)
@@ -339,8 +357,14 @@ class SaveAnswersSerializer(serializers.Serializer):
             # Crear el objeto AnswerEssayUser
             essay_answer = AnswerEssayUser.objects.create(answers=answer, essays=user_essay, users=user,
                                                           score=answer.right, time_essay=time_essay)
+            
+            if (answer.right == 1):
+                maxpoint+=1
+
             essay_answers.append(essay_answer)
 
+        self.validateAchievements(maxpoint,answer_ids,user)
+        
         return essay_answers
 
 class SaveAnswerSerializer(serializers.Serializer):
@@ -467,6 +491,12 @@ class CustomEssaySerializer(serializers.ModelSerializer):
         for type_math_id in type_math_ids:
             type_essays = MathType.objects.get(id=type_math_id)
             TypesEssayCustom.objects.create(type_essays=type_essays, custom_essay=custom_essay)
+
+        count = CustomEssay.objects.filter(is_custom = True, user = self.context['request'].user).count()
+        if (count == 1):
+            achievemet = Achievement.objects.filter(name = 'Creador de Ensayos').first()
+            UserAchievement.objects.create(user=self.context['request'].user, achievement=achievemet)
+
 
         return custom_essay
 
@@ -760,6 +790,9 @@ class PrePAESCreateSerializer(serializers.ModelSerializer): #si pones solo seria
 
         if(nunero_fase == 0):
             prePAES_user = PrePAES.objects.create(user = user, number_phase = 1) #se suma en 1 siempre el numero de fase para ser mayor que el anterior
+            achievemet = Achievement.objects.filter(name = 'Iniciando el Viaje PrePAES').first()
+            
+            UserAchievement.objects.create(user=user, achievement=achievemet)#relacionado al primer logro que es por realizar un método prePAES
             return prePAES_user
         else:
             count = self.verifyCreation(user)
@@ -767,6 +800,10 @@ class PrePAESCreateSerializer(serializers.ModelSerializer): #si pones solo seria
                 #agregar raise error
                 raise serializers.ValidationError('No se han completado todas las preguntas de la fase')
             #si ya se completo entonces se crea
+            if(PrePAES.objects.filter(user = user).count() == 1):
+                achievemet = Achievement.objects.filter(name = 'Dominio de la Fase Inicial').first()
+                UserAchievement.objects.create(user=user, achievement=achievemet)#relacionado al primer logro que es por realizar un método prePAES
+
             prePAES_user = PrePAES.objects.create(user = user, number_phase = nunero_fase+1) #se suma en 1 siempre el numero de fase para ser mayor que el anterior
             return prePAES_user
     
@@ -880,8 +917,31 @@ class StadisticsPrePAESSerializer(serializers.ModelSerializer):
 
         return data
 
+#17-10-2023
 class QuestionErrorSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = QuestionError
         exclude = [*generic_fields]
+
+#20-10-2023
+class AchievmentSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Achievement
+        exclude = [*generic_fields]
+
+class UserAchievmentCreateSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = UserAchievement
+        exclude = [*generic_fields]
+
+class UserAchievmentListSerializer(serializers.ModelSerializer):
+    achievement = AchievmentSerializer()
+
+    class Meta:
+        model = UserAchievement
+        exclude = [*generic_fields]
+
+

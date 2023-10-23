@@ -61,16 +61,20 @@ urlpatterns = [
     re_path(r'^question_oneQuestionRules_prePaes/$', views.oneQuestionRulesPrePaes.as_view()),#endpoint para consultar una sola pregunta en base a las reglas establecidas
     re_path(r'^PrePAES_submit_answers/$', views.AnswerPrePAESView.as_view()),#guarda una respuesta del usuario para método prePAES
     re_path(r'^PrePAES_data_questions/(?P<question>[0-9]+)/$', views.oneQuestionDataListView.as_view()),#endpoint para consultar la pregunta con todos sus datos
-
     re_path(r'^PrePAES_stadictis/$', views.stadisticsPrePAESView.as_view()),#endpoint para consultar la pregunta con todos sus datos
-
-
     #para obtener las demas respuestas usar la url questions_alternativeSpecific
     re_path(r'^PrePAES_answers/(?P<question>[0-9]+)/$', views.AnswerPrePAESListView.as_view()),#obtener la
 
     re_path(r'^best_average_score/(?P<pk>[0-9]+)/$', views.bestAverageScore.as_view()),#Endpoint para consultar el puntaje maximo y el promedio de puntajes de un usaurio
     re_path(r'^recent_essay/(?P<pk>[0-9]+)/$', views.CustomEssayMostRecentView.as_view()),#Endpoint para consultar el ensayo más reciente
     re_path(r'^recent_essay_resume/(?P<pk>[0-9]+)/$', views.CustomEssayMostRecentResumeView.as_view()),#Endpoint para consultar los ultimos 5 ensayos
+
+    re_path(r'^achievment/$', views.achievmentListCreateView.as_view()),#Endpoint para crear y listar logros
+    re_path(r'^achievment/(?P<pk>[0-9]+)/$', views.achievmenRetrieveUpdateDestroyView.as_view()),#Endpoint para modificar, eliminar y retornar solo uno logro
+    re_path(r'^achievment_user/create/$', views.UserAchievmentCreateView.as_view()),#Endpoint para asociar un logro a un usuario
+    re_path(r'^achievment_user/$', views.UserAchievmentListView.as_view()),#Endpoint para modificar, eliminar y retornar solo uno logro
+
+
     re_path(r'^home/$', views.falseCharge.as_view()),#Endpoint para peticion falsa
 ]
 

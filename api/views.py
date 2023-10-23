@@ -5,7 +5,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from api.models import *
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from django.contrib.auth import authenticate, logout
 from api.renderers import UserRenderer
 from django_filters.rest_framework import DjangoFilterBackend
@@ -893,7 +893,7 @@ class UserPrePAESQuestionsListViews(generics.ListAPIView):
         data = []
         indiceDatos = 0
         serializer = UserPrePAESData(queryset)
-
+        print(serializer.data)#23-20 verificar esto porque puede que no haya nada
         if(len(serializer.data['user_PrePAES']) != 0):
                 
                 data.append(serializer.data)
@@ -1055,6 +1055,66 @@ class questionErrorRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIVi
     serializer_class = QuestionErrorSerializer
 
     
+#20-10-2023
+
+class achievmentListCreateView(generics.ListCreateAPIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]#IsAdminUser para toda la view
+    serializer_class = AchievmentSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        if (user.is_admin == True):
+            queryset = Achievement.objects.filter(is_deleted = False).order_by('?')
+            return queryset
+        else:
+           raise serializers.ValidationError({"message":"Acceso disponible solo a usuario administrador"})
+
+    def create(self, request, *args, **kwargs):
+
+        if (self.request.user.is_admin == True):
+            serializer = self.serializer_class(data=request.data,many = True)
+            if(serializer.is_valid()):
+                serializer.save()
+                return Response({"message":'Logro creado correctamente'}, status=status.HTTP_200_OK)      
+        return Response({"message":"Acceso disponible solo a usuario administrador"}, status=status.HTTP_401_UNAUTHORIZED)
+
+class achievmenRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]#IsAdminUser para toda la view
+    serializer_class = AchievmentSerializer
+    queryset = Achievement.objects.filter(is_deleted = False).order_by('?')
+
+class UserAchievmentCreateView(generics.CreateAPIView):
+    permission_classes = [IsAuthenticated]#IsAdminUser para toda la view
+    serializer_class = UserAchievmentCreateSerializer
+    queryset = Achievement.objects.filter(is_deleted = False).order_by('?')
+
+    def create(self, request, *args, **kwargs):
+
+        if (len(request.data) == 2):
+            if (request.data['user'] != None and request.data['achievement'] != None):
+                user_achievement = self.serializer_class(data = request.data, context={'request': request})
+                if user_achievement.is_valid():
+                    user_achievement.save()
+                    return Response({'message':'CREATED'}, status=status.HTTP_201_CREATED)
+                else:
+                    return Response({'message':'Datos invalidos, verifique que el usuario y el logro existan'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'message':'Falta de datos, verifique qque los datos se han ingresado correctamente'}, status=status.HTTP_400_BAD_REQUEST)
+
+class UserAchievmentListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]#IsAdminUser para toda la view
+    serializer_class = UserAchievmentListSerializer
     
+    def get_queryset(self):
+        user = self.request.user
+        queryset = UserAchievement.objects.filter(is_deleted = False, user = user).order_by('?')
+        return queryset
+    
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        if(len(queryset) == 0):
+            return Response({"message":"El usuario no posee logros"}, status=status.HTTP_204_NO_CONTENT)
+        serializer = self.serializer_class(queryset, many = True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+        
     
 
