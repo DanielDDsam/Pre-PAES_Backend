@@ -1124,7 +1124,7 @@ class UserAchievmentListView(generics.ListAPIView):
         for i in range(len(achievmentData)):
             for j in range(len(queryset)):
                 if(achievmentData[i].id == queryset[j].achievement.id):
-                    serializer.data[j]['data'] = True
+                    serializer.data[j]['flag'] = True
                     data.append(serializer.data[j])
 
         flag = True
@@ -1136,7 +1136,7 @@ class UserAchievmentListView(generics.ListAPIView):
                     break
             
             if(flag == True):
-                achievmentSerializer.data[i]['data'] = False
+                achievmentSerializer.data[i]['flag'] = False
                 data.append(achievmentSerializer.data[i])
                 flag = True
 
