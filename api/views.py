@@ -1129,7 +1129,7 @@ class UserAchievmentListView(generics.ListAPIView):
 
         flag = True
         for i in range(len(achievmentData)):#logros
-
+            flag = True
             for j in range(len(queryset)):# logros usuario
                 if(achievmentData[i].id == queryset[j].achievement.id):#si ya lo tiene rompe el ciclo actual 
                     flag = False
@@ -1145,7 +1145,7 @@ class UserAchievmentListView(generics.ListAPIView):
                 achievmentSerializer.data[i].pop('image_url')
     
                 data.append(achievmentSerializer.data[i])
-                flag = True
+              
 
         print(data)
         
