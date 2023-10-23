@@ -1137,6 +1137,13 @@ class UserAchievmentListView(generics.ListAPIView):
             
             if(flag == True):
                 achievmentSerializer.data[i]['flag'] = False
+                achievementData = achievmentSerializer.data[i].copy()
+                achievmentSerializer.data[i]['achievement'] = achievementData
+
+                achievmentSerializer.data[i].pop('name')
+                achievmentSerializer.data[i].pop('description')
+                achievmentSerializer.data[i].pop('image_url')
+    
                 data.append(achievmentSerializer.data[i])
                 flag = True
 
