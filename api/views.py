@@ -1150,6 +1150,71 @@ class UserAchievmentListView(generics.ListAPIView):
         print(data)
         
         return Response(data, status=status.HTTP_200_OK)
+
+class stadisticsPrePAESRealTimeView(generics.ListAPIView):
+    
+    permission_classes = [IsAuthenticated]
+    serializer_class = StadisticsPrePAESSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        lastPrePAES = PrePAES.objects.filter(user = user).order_by('-created').first()#obtenemos el ultimo prePAES
+        prePaes = PrePAESQuestion.objects.filter(pre_PAES = lastPrePAES).values_list('question_id')
+        print(prePaes)
+        queryset = UserQuestionState.objects.filter(users = user, question_id__in = prePaes)
+        print(queryset)
+        return queryset
+
+    def stateMAX(self, serializer):
+
+        if (len(serializer.data) > 0):
+            claves = {"Reforzar": {}, "Correcta": {}}
+            for data in serializer.data:
+                state = data["state"]# Reforzar o Correcta desde los datos de la base de datos
+                subject = data["subject"]
+                
+                if subject not in claves[state]:
+                    claves[state][subject] = 1
+                else:
+                    claves[state][subject] += 1 #para caba subject suma +1 si aparece
+
+            most_common_subjects = {}
+            for state in claves:#iteramos en la claves proporcionado este caso reforzar y Correcta
+                most_common_subjects[state] = max(claves[state], key=claves[state].get, default=0)#la funcion max en base a los estados, identifica mediante la obtencion de get cual es el que más se repite em base al elemeto definido, en este caso las claves[state], default da un valor si el iterable esta vacio
+
+            #most_common_subjects = {
+            #   state: max(claves[state], key=claves[state].get, default=0) #la funcion max en base a los estados, identifica mediante la obtencion de get cual es el que más se repite em base al elemeto definido, en este caso las claves[state], default da un valor si el iterable esta vacio
+            #  for state in claves #iteramos en la claves proporcionado este caso reforzar y Correcta
+            #}
+
+            return most_common_subjects['Reforzar']
+        return 'Aun no contestas preguntas'
+    
+    def promedio_fase(self, serializer):
+
+        cantidad = 0
+        if (len(serializer) > 0):
+            for i in serializer:
+                if (i['state'] == 'Correcta'):
+                    cantidad+=1
+            
+            cantidad = (cantidad*7)/len(serializer)
+            return round(cantidad, 1)
+        return 'Aun no contestas preguntas'
+
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.serializer_class(queryset, many=True)
+        most_common_subjects = self.stateMAX(serializer)
+        most_common_state = self.promedio_fase(serializer.data)
+               
+        data = []
+        data.append(most_common_subjects)
+        data.append(most_common_state)
+
+
+        return Response(data, status=status.HTTP_200_OK)
     
 
         

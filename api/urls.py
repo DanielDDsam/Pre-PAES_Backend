@@ -62,6 +62,7 @@ urlpatterns = [
     re_path(r'^PrePAES_submit_answers/$', views.AnswerPrePAESView.as_view()),#guarda una respuesta del usuario para método prePAES
     re_path(r'^PrePAES_data_questions/(?P<question>[0-9]+)/$', views.oneQuestionDataListView.as_view()),#endpoint para consultar la pregunta con todos sus datos
     re_path(r'^PrePAES_stadictis/$', views.stadisticsPrePAESView.as_view()),#endpoint para consultar la pregunta con todos sus datos
+    re_path(r'^PrePAES_stadictis_real_time/$', views.stadisticsPrePAESRealTimeView.as_view()),#endpoint para consultar la pregunta con todos sus datos
     #para obtener las demas respuestas usar la url questions_alternativeSpecific
     re_path(r'^PrePAES_answers/(?P<question>[0-9]+)/$', views.AnswerPrePAESListView.as_view()),#obtener la
 
