@@ -1158,7 +1158,8 @@ class stadisticsPrePAESRealTimeView(generics.ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        lastPrePAES = PrePAES.objects.filter(user = user).order_by('-created').first()#obtenemos el ultimo prePAES
+        fase = self.kwargs['fase']
+        lastPrePAES = PrePAES.objects.filter(user = user, number_phase = fase).order_by('-created').first()#obtenemos el ultimo prePAES
         prePaes = PrePAESQuestion.objects.filter(pre_PAES = lastPrePAES).values_list('question_id')
         print(prePaes)
         queryset = UserQuestionState.objects.filter(users = user, question_id__in = prePaes)
