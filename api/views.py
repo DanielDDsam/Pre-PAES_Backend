@@ -1211,9 +1211,11 @@ class stadisticsPrePAESRealTimeView(generics.ListAPIView):
         most_common_state = self.promedio_fase(serializer.data)
                
         data = {"category":most_common_subjects,"average":most_common_state}
+        dataFront = []
+        dataFront.append(data)
 
 
-        return Response(data, status=status.HTTP_200_OK)
+        return Response(dataFront, status=status.HTTP_200_OK)
     
 
         
