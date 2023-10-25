@@ -1209,9 +1209,7 @@ class stadisticsPrePAESRealTimeView(generics.ListAPIView):
         most_common_subjects = self.stateMAX(serializer)
         most_common_state = self.promedio_fase(serializer.data)
                
-        data = []
-        data.append(most_common_subjects)
-        data.append(most_common_state)
+        data = {"category":most_common_subjects,"average":most_common_state}
 
 
         return Response(data, status=status.HTTP_200_OK)
