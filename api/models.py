@@ -97,7 +97,8 @@ class Users(AbstractBaseUser,GenericAttributes):
 #clase de logros 21-09-2023
 class Achievement(GenericAttributes):
     name = models.TextField(**common_args)
-    image_url = models.TextField(**common_args)
+    description = models.TextField(**common_args)
+    image_url = models.URLField(**common_args)
 
 #clase de logros 21-09-2023
 class UserAchievement(GenericAttributes):

@@ -5,7 +5,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from api.models import *
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from django.contrib.auth import authenticate, logout
 from api.renderers import UserRenderer
 from django_filters.rest_framework import DjangoFilterBackend
@@ -893,7 +893,7 @@ class UserPrePAESQuestionsListViews(generics.ListAPIView):
         data = []
         indiceDatos = 0
         serializer = UserPrePAESData(queryset)
-
+        print(serializer.data)#23-20 verificar esto porque puede que no haya nada
         if(len(serializer.data['user_PrePAES']) != 0):
                 
                 data.append(serializer.data)
@@ -1055,6 +1055,169 @@ class questionErrorRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIVi
     serializer_class = QuestionErrorSerializer
 
     
+#20-10-2023
+
+class achievmentListCreateView(generics.ListCreateAPIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]#IsAdminUser para toda la view
+    serializer_class = AchievmentSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        if (user.is_admin == True):
+            queryset = Achievement.objects.filter(is_deleted = False).order_by('?')
+            return queryset
+        else:
+           raise serializers.ValidationError({"message":"Acceso disponible solo a usuario administrador"})
+
+    def create(self, request, *args, **kwargs):
+
+        if (self.request.user.is_admin == True):
+            serializer = self.serializer_class(data=request.data,many = True)
+            if(serializer.is_valid()):
+                serializer.save()
+                return Response({"message":'Logro creado correctamente'}, status=status.HTTP_200_OK)      
+        return Response({"message":"Acceso disponible solo a usuario administrador"}, status=status.HTTP_401_UNAUTHORIZED)
+
+class achievmenRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]#IsAdminUser para toda la view
+    serializer_class = AchievmentSerializer
+    queryset = Achievement.objects.filter(is_deleted = False).order_by('?')
+
+class UserAchievmentCreateView(generics.CreateAPIView):
+    permission_classes = [IsAuthenticated]#IsAdminUser para toda la view
+    serializer_class = UserAchievmentCreateSerializer
+    queryset = Achievement.objects.filter(is_deleted = False).order_by('?')
+
+    def create(self, request, *args, **kwargs):
+
+        if (len(request.data) == 2):
+            if (request.data['user'] != None and request.data['achievement'] != None):
+                user_achievement = self.serializer_class(data = request.data, context={'request': request})
+                if user_achievement.is_valid():
+                    user_achievement.save()
+                    return Response({'message':'CREATED'}, status=status.HTTP_201_CREATED)
+                else:
+                    return Response({'message':'Datos invalidos, verifique que el usuario y el logro existan'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'message':'Falta de datos, verifique qque los datos se han ingresado correctamente'}, status=status.HTTP_400_BAD_REQUEST)
+
+class UserAchievmentListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]#IsAdminUser para toda la view
+    serializer_class = UserAchievmentListSerializer
     
+    def get_queryset(self):
+        user = self.request.user
+        queryset = UserAchievement.objects.filter(is_deleted = False, user = user).order_by('?')
+        return queryset
+    
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        if(len(queryset) == 0):
+            return Response({"message":"El usuario no posee logros"}, status=status.HTTP_204_NO_CONTENT) 
+        serializer = self.serializer_class(queryset, many = True)
+
+
+        data = []
+
+        achievmentData = Achievement.objects.all()
+        achievmentSerializer = AchievmentSerializer(achievmentData, many = True)
+        
+        for i in range(len(achievmentData)):
+            for j in range(len(queryset)):
+                if(achievmentData[i].id == queryset[j].achievement.id):
+                    serializer.data[j]['flag'] = True
+                    data.append(serializer.data[j])
+
+        flag = True
+        for i in range(len(achievmentData)):#logros
+            flag = True
+            for j in range(len(queryset)):# logros usuario
+                if(achievmentData[i].id == queryset[j].achievement.id):#si ya lo tiene rompe el ciclo actual 
+                    flag = False
+                    break
+            
+            if(flag == True):
+                achievmentSerializer.data[i]['flag'] = False
+                achievementData = achievmentSerializer.data[i].copy()
+                achievmentSerializer.data[i]['achievement'] = achievementData
+
+                achievmentSerializer.data[i].pop('name')
+                achievmentSerializer.data[i].pop('description')
+                achievmentSerializer.data[i].pop('image_url')
+    
+                data.append(achievmentSerializer.data[i])
+              
+
+        print(data)
+        
+        return Response(data, status=status.HTTP_200_OK)
+
+class stadisticsPrePAESRealTimeView(generics.ListAPIView):
+    
+    permission_classes = [IsAuthenticated]
+    serializer_class = StadisticsPrePAESSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        fase = self.kwargs['fase']
+        lastPrePAES = PrePAES.objects.filter(user = user, number_phase = fase).order_by('-created').first()#obtenemos el ultimo prePAES
+        prePaes = PrePAESQuestion.objects.filter(pre_PAES = lastPrePAES).values_list('question_id')
+        print(prePaes)
+        queryset = UserQuestionState.objects.filter(users = user, question_id__in = prePaes)
+        print(queryset)
+        return queryset
+
+    def stateMAX(self, serializer):
+
+        if (len(serializer.data) > 0):
+            claves = {"Reforzar": {}, "Correcta": {}}
+            for data in serializer.data:
+                state = data["state"]# Reforzar o Correcta desde los datos de la base de datos
+                subject = data["subject"]
+                
+                if subject not in claves[state]:
+                    claves[state][subject] = 1
+                else:
+                    claves[state][subject] += 1 #para caba subject suma +1 si aparece
+
+            most_common_subjects = {}
+            for state in claves:#iteramos en la claves proporcionado este caso reforzar y Correcta
+                most_common_subjects[state] = max(claves[state], key=claves[state].get, default=0)#la funcion max en base a los estados, identifica mediante la obtencion de get cual es el que más se repite em base al elemeto definido, en este caso las claves[state], default da un valor si el iterable esta vacio
+
+            #most_common_subjects = {
+            #   state: max(claves[state], key=claves[state].get, default=0) #la funcion max en base a los estados, identifica mediante la obtencion de get cual es el que más se repite em base al elemeto definido, en este caso las claves[state], default da un valor si el iterable esta vacio
+            #  for state in claves #iteramos en la claves proporcionado este caso reforzar y Correcta
+            #}
+
+            return most_common_subjects['Reforzar']
+        return 'Aun no contestas preguntas'
+    
+    def promedio_fase(self, serializer):
+
+        cantidad = 0
+        if (len(serializer) > 0):
+            for i in serializer:
+                if (i['state'] == 'Correcta'):
+                    cantidad+=1
+            
+            cantidad = (cantidad*7)/len(serializer)
+            return round(cantidad, 1)
+        return 'Aun no contestas preguntas'
+
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.serializer_class(queryset, many=True)
+        most_common_subjects = self.stateMAX(serializer)
+        most_common_state = self.promedio_fase(serializer.data)
+               
+        data = {"category":most_common_subjects,"average":most_common_state}
+        dataFront = []
+        dataFront.append(data)
+
+
+        return Response(dataFront, status=status.HTTP_200_OK)
+    
+
+        
     
 
