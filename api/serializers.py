@@ -33,7 +33,7 @@ class UserLoginSerializer(serializers.ModelSerializer):
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Users
-        fields = ['email', 'username']
+        fields = ['email', 'username', 'avatar']
 
 
 # Serializador para el registro del usuario, compara las contraseñas para verificar que coincidan
