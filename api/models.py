@@ -77,6 +77,7 @@ class Users(AbstractBaseUser,GenericAttributes):
     is_admin = models.BooleanField(**common_args,default=False)
     username = models.TextField(**common_args)
     is_active = models.BooleanField(**common_args, default = True)
+    avatar = models.URLField(**common_args)
     #schoolType = models.CharField(**common_args, max_length=255)
     #academicDegree = models.CharField(**common_args, max_length=255)
 

@@ -1216,8 +1216,43 @@ class stadisticsPrePAESRealTimeView(generics.ListAPIView):
 
 
         return Response(dataFront, status=status.HTTP_200_OK)
-    
 
+class questionPercentView(generics.ListAPIView):
+    
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        essayTypes = MathType.objects.all()
+        return essayTypes
+
+    def dataEssayTypes(self,essayTypesData,user):
+
+        numberEssayType = 0
+        data = {}
+        data2 = {}
+        for i in range(len(essayTypesData)):#por cada tipo de matematica
+            numberEssayType = CustomEssay.objects.filter(type_essay = essayTypesData[i], user = user).count()
+            print(numberEssayType)
+            questionRigth = Answer.objects.filter(questions__type_question = essayTypesData[i], users = user, right = 1).count()
+            questionBad = Answer.objects.filter(questions__type_question = essayTypesData[i], users = user, right = 0).count()
+            allquestion = Answer.objects.filter(questions__type_question = essayTypesData[i], users = user).count()
+
+            if(numberEssayType == 0):
+                data2['Correcta'] = 0
+                data2['Incorrecta'] = 0
+            else:
+                data2['Correcta'] = round(questionRigth*100/allquestion)
+                data2['Incorrecta'] = round(questionBad*100/allquestion)
+            data[str(essayTypesData[i].type)] = data2.copy()
+        
+        return data
+
+    def list(self, request, *args, **kwargs):
+        essayTypesData = self.get_queryset()
+        user =  self.request.user
+        data = []
+        data.append(self.dataEssayTypes(essayTypesData,user))
+        return Response(data, status=status.HTTP_200_OK)
         
     
 
