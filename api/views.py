@@ -1112,7 +1112,7 @@ class UserAchievmentListView(generics.ListAPIView):
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         data = []
-
+        print("data: "+str(queryset))
         if(len(queryset) == 0):
 
             achievmentData = Achievement.objects.all()
@@ -1130,28 +1130,30 @@ class UserAchievmentListView(generics.ListAPIView):
                 achievmentSerializer.data[i].pop('description')
                 achievmentSerializer.data[i].pop('image_url')
                 data.append(achievmentSerializer.data[i])
-                
+
             return Response(data, status=status.HTTP_200_OK) 
         else:
-
+            print('1136')
             serializer = self.serializer_class(queryset, many = True)
             achievmentData = Achievement.objects.all()
             achievmentSerializer = AchievmentSerializer(achievmentData, many = True)
-            
+            print('1140')
             for i in range(len(achievmentData)):
                 for j in range(len(queryset)):
                     if(achievmentData[i].id == queryset[j].achievement.id):
+                        print('1144')
                         serializer.data[j]['flag'] = True
                         data.append(serializer.data[j])
 
             flag = True
+            print('1148')
             for i in range(len(achievmentData)):#logros
                 flag = True
                 for j in range(len(queryset)):# logros usuario
                     if(achievmentData[i].id == queryset[j].achievement.id):#si ya lo tiene rompe el ciclo actual 
                         flag = False
                         break
-                
+                print('1156')
                 if(flag == True):
                     achievmentSerializer.data[i]['flag'] = False
                     dataAchievement = achievmentSerializer.data[i].copy()#copiamos el valor con copy para no tener problemas con las referencias 
