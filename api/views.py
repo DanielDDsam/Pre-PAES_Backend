@@ -1139,14 +1139,18 @@ class UserAchievmentListView(generics.ListAPIView):
             achievmentSerializer = AchievmentSerializer(achievmentData, many = True)
             print('1140')
             for i in range(len(achievmentData)):
+                print('1142')
+                print(achievmentData)
                 for j in range(len(queryset)):
+                    print('1145')
+                    print(queryset)
                     if(achievmentData[i].id == queryset[j].achievement.id):
-                        print('1144')
+                        print('1147')
                         serializer.data[j]['flag'] = True
                         data.append(serializer.data[j])
 
             flag = True
-            print('1148')
+            print('1152')
             for i in range(len(achievmentData)):#logros
                 flag = True
                 for j in range(len(queryset)):# logros usuario
