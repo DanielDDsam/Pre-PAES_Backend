@@ -1111,43 +1111,59 @@ class UserAchievmentListView(generics.ListAPIView):
     
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
-        serializer = self.serializer_class(queryset, many = True)
-
-
         data = []
 
-        achievmentData = Achievement.objects.all()
-        achievmentSerializer = AchievmentSerializer(achievmentData, many = True)
-        
-        for i in range(len(achievmentData)):
-            for j in range(len(queryset)):
-                if(achievmentData[i].id == queryset[j].achievement.id):
-                    serializer.data[j]['flag'] = True
-                    data.append(serializer.data[j])
+        if(len(queryset) == 0):
 
-        flag = True
-        for i in range(len(achievmentData)):#logros
-            flag = True
-            for j in range(len(queryset)):# logros usuario
-                if(achievmentData[i].id == queryset[j].achievement.id):#si ya lo tiene rompe el ciclo actual 
-                    flag = False
-                    break
-            
-            if(flag == True):
+            achievmentData = Achievement.objects.all()
+            achievmentSerializer = AchievmentSerializer(achievmentData, many = True)
+
+            if(len(achievmentData) == 0):
+                Response({"message":"No hay logros en el sistema"}, status=status.HTTP_404_NOT_FOUND) 
+
+            for i in range(len(achievmentData)):#logros
                 achievmentSerializer.data[i]['flag'] = False
-                achievementData = achievmentSerializer.data[i].copy()
-                achievmentSerializer.data[i]['achievement'] = achievementData
+                dataAchievement = achievmentSerializer.data[i].copy()#copiamos el valor con copy para no tener problemas con las referencias 
+                achievmentSerializer.data[i]['achievement'] = dataAchievement
 
                 achievmentSerializer.data[i].pop('name')
                 achievmentSerializer.data[i].pop('description')
                 achievmentSerializer.data[i].pop('image_url')
-    
                 data.append(achievmentSerializer.data[i])
-              
+                
+            return Response(data, status=status.HTTP_200_OK) 
+        else:
 
-        print(data)
+            serializer = self.serializer_class(queryset, many = True)
+            achievmentData = Achievement.objects.all()
+            achievmentSerializer = AchievmentSerializer(achievmentData, many = True)
+            
+            for i in range(len(achievmentData)):
+                for j in range(len(queryset)):
+                    if(achievmentData[i].id == queryset[j].achievement.id):
+                        serializer.data[j]['flag'] = True
+                        data.append(serializer.data[j])
+
+            flag = True
+            for i in range(len(achievmentData)):#logros
+                flag = True
+                for j in range(len(queryset)):# logros usuario
+                    if(achievmentData[i].id == queryset[j].achievement.id):#si ya lo tiene rompe el ciclo actual 
+                        flag = False
+                        break
+                
+                if(flag == True):
+                    achievmentSerializer.data[i]['flag'] = False
+                    dataAchievement = achievmentSerializer.data[i].copy()#copiamos el valor con copy para no tener problemas con las referencias 
+                    achievmentSerializer.data[i]['achievement'] = dataAchievement
+
+                    achievmentSerializer.data[i].pop('name')
+                    achievmentSerializer.data[i].pop('description')
+                    achievmentSerializer.data[i].pop('image_url')
         
-        return Response(data, status=status.HTTP_200_OK)
+                    data.append(achievmentSerializer.data[i])
+            print(data)
+            return Response(data, status=status.HTTP_200_OK)
 
 class stadisticsPrePAESRealTimeView(generics.ListAPIView):
     
