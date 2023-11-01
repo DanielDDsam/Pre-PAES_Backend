@@ -797,6 +797,7 @@ class PrePAESCreateSerializer(serializers.ModelSerializer): #si pones solo seria
             return prePAES_user
         else:
             count = self.verifyCreation(user)
+            self.verifyAchievement(user)
             if(count < 10):#si la fase aun no se completa, entonces no crea nada
                 #agregar raise error
                 raise serializers.ValidationError('No se han completado todas las preguntas de la fase')
@@ -812,6 +813,14 @@ class PrePAESCreateSerializer(serializers.ModelSerializer): #si pones solo seria
         queryset = PrePAES.objects.filter(user = user).order_by('-created').first()#solo el primer coincidente
         data = AnswerPrePAES.objects.filter(pre_PAES_id = queryset.id).count()#solo entrega la cuenta
         return data
+    
+    def verifyAchievement(self, user):
+
+        achievemet = Achievement.objects.filter(name = 'Iniciando el Viaje PrePAES').first()
+        verify = UserAchievement.objects.filter(user=user, achievement=achievemet).first()
+
+        if(verify is None):
+            UserAchievement.objects.create(user=user, achievement=achievemet)#relacionado al primer logro que es por realizar un método prePAES
 
 #22-09-2023
 class AnswerPrePAESSerializer(serializers.ModelSerializer): #si pones solo serializer.Serializer solo mostrara los campos definidos como user_Essay_PrePAES, no el del moldeo
