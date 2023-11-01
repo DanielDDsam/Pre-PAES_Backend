@@ -1111,8 +1111,6 @@ class UserAchievmentListView(generics.ListAPIView):
     
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
-        if(len(queryset) == 0):
-            return Response({"message":"El usuario no posee logros"}, status=status.HTTP_204_NO_CONTENT) 
         serializer = self.serializer_class(queryset, many = True)
 
 
