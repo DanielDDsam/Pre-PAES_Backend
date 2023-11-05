@@ -502,12 +502,33 @@ class CustomEssaySerializer(serializers.ModelSerializer):
         return custom_essay
 
 
-class CustomEssayQuestionSerializer(serializers.ModelSerializer): #modificado el 12-09 para provar la obtencion de pregunta de prepaes
+class CustomEssayQuestionSerializer(serializers.Serializer): #modificado el 12-09 para provar la obtencion de pregunta de prepaes
     # Campo 'questions' que es una lista de claves primarias relacionadas con el modelo Question
 
-    class Meta:
-        model = CustomEssayQuestion
-        fields = ['custom_essay', 'question']  # Campos del serializador
+    question_ids = serializers.ListSerializer(child=serializers.IntegerField())
+    user_essay_id = serializers.IntegerField()
+    
+    def create(self, validated_data):
+        question_ids = validated_data.get('question_ids')
+        user_essay_id = validated_data.get('user_essay_id')
+
+        # Obtener el ensayo personalizado del usuario
+        user_essay = get_object_or_404(CustomEssay, pk=user_essay_id)
+        user = self.context['request'].user
+        essay_answers = []
+        maxpoint = 0
+        # Crear objetos AnswerEssayUser para cada respuesta seleccionada
+        for question_id in question_ids:
+            question = get_object_or_404(Question, pk=question_id)
+
+            # Verificar si ya existe una respuesta para la combinación de UserEssay y Answer
+            if CustomEssayQuestion.objects.filter(question=question, custom_essay=user_essay).exists():
+                raise serializers.ValidationError('Ya existe una respuesta para esta combinación de ensayo personalizado y pregunta.')
+
+            # Crear el objeto AnswerEssayUser
+            essay_question = CustomEssayQuestion.objects.create(question=question, custom_essay=user_essay)
+            
+        return essay_question
 
 
     """def validate(self, attrs):
@@ -954,4 +975,10 @@ class UserAchievmentListSerializer(serializers.ModelSerializer):
         model = UserAchievement
         exclude = [*generic_fields]
 
+#03-11-2023
 
+class validatorYoutubeULR(serializers.ModelSerializer):
+
+    class Meta:
+        model = Question
+        fields = ['id','link_resolution']

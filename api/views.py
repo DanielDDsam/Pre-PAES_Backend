@@ -13,6 +13,8 @@ from django.db.models.functions import Random
 import random
 import math
 from datetime import datetime
+import requests
+
 # Create your views here.
 
 #funcion para obtener jwt para el usuario cuando hace login
@@ -236,6 +238,7 @@ class SaveAnswersView(generics.CreateAPIView):
     serializer_class = SaveAnswersSerializer  # Clase serializadora utilizada
 
     def post(self, request, *args, **kwargs):
+        print(request.data)
         serializer = self.serializer_class(data=request.data, context={'request': request})  # Crear una instancia del serializador con los datos de la solicitud
         serializer.is_valid(raise_exception=True)  # Validar los datos y lanzar una excepción en caso de que sean inválidos
         serializer.save()  # Guardar los datos
@@ -267,6 +270,13 @@ class CustomEssayQuestionView(generics.ListCreateAPIView):
     queryset = CustomEssayQuestion.objects.filter(is_deleted=False)  # Consulta para obtener las relaciones entre ensayos personalizados y preguntas que no han sido eliminadas
     serializer_class = CustomEssayQuestionSerializer  # Clase serializadora utilizada
     permission_classes = (IsAuthenticated,)  # Permiso requerido para acceder a la vista
+
+    def post(self, request, *args, **kwargs):
+        print(request.data)
+        serializer = self.serializer_class(data=request.data, context={'request': request})  # Crear una instancia del serializador con los datos de la solicitud
+        serializer.is_valid(raise_exception=True)  # Validar los datos y lanzar una excepción en caso de que sean inválidos
+        serializer.save()  # Guardar los datos
+        return Response({'message': 'CREATED'}, status=status.HTTP_201_CREATED)  # Devolver una respuesta exitosa
 
 
 
@@ -1275,5 +1285,49 @@ class questionPercentView(generics.ListAPIView):
         data.append(self.dataEssayTypes(essayTypesData,user))
         return Response(data, status=status.HTTP_200_OK)
         
-    
+class validatorURLView(generics.ListAPIView):   
 
+    permission_classes = [IsAuthenticated]
+    serializer_class = validatorYoutubeULR
+
+    def get_queryset(self):
+    
+        queryset = Question.objects.all()#obtenemos el ultimo prePAES
+        return queryset
+
+    def verificar_video(self, urls):
+        request = requests.get(urls,stream=True,allow_redirects=False).status_code
+
+        if request == 200:
+            return True
+        return False
+        
+    def formatearURL(self, url):
+        url = url.replace("embed/", "watch?v=")
+        url = url.split("?start=")[0]
+
+        return url
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.serializer_class(queryset, many=True)
+
+        urlPull = []
+
+        for i in serializer.data:
+            data = self.formatearURL(i['link_resolution'])
+            i['format_link']=data
+            urlPull.append(data)
+        
+        uniqueURL = set(urlPull)
+        listURL = (list(uniqueURL))
+        data = []
+        for i in listURL:
+            data.append({'url': i, 'state':self.verificar_video(i)})
+
+        for i in serializer.data:
+            for j in data:
+                if(i['format_link'] == j['url']):
+                    i['state'] = j['state']
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
