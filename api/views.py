@@ -1297,9 +1297,11 @@ class validatorURLView(generics.ListAPIView):
 
     def verificar_video(self, urls):
         request = requests.get(urls,stream=True,allow_redirects=False).status_code
-
+    
         if request == 200:
-            return True
+            return 200
+        if request == 301:
+            return 301
         return False
         
     def formatearURL(self, url):
@@ -1324,10 +1326,23 @@ class validatorURLView(generics.ListAPIView):
         data = []
         for i in listURL:
             data.append({'url': i, 'state':self.verificar_video(i)})
-
+        
+        dataBad = []
         for i in serializer.data:
             for j in data:
                 if(i['format_link'] == j['url']):
                     i['state'] = j['state']
 
-        return Response(serializer.data, status=status.HTTP_200_OK)
+                    if (j['state'] == 200):
+                        i['message'] = 'OK'
+                    if(j['state'] == 301):
+                        i['message'] = 'Verificar url video original'
+                        dataBad.append(i)
+                    if(j['state'] == False):
+                        i['message'] = 'Video no disponible'
+                        dataBad.append(i)
+
+        
+        if(len(dataBad) == 0):
+            return Response({"message":"Todos los videos estan disponibles"}, status=status.HTTP_200_OK)
+        return Response(dataBad, status=status.HTTP_200_OK)

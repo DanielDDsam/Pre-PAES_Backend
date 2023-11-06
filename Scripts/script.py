@@ -3135,9 +3135,41 @@ def poblarBd(data):
                 print('------------------------------------------------------------------')
                 print('------------------------------------------------------------------')
 
+def poblarDbLogros():
+    logros_data = [{
+    "name": "Iniciando el Viaje PrePAES",
+    "description": "Practicaste por primera vez con el método PrePAES",
+    "image_url": "https://res.cloudinary.com/dohtxxlbe/image/upload/v1698069605/Logros%20PrePAES/logro-iniciando-el-viaje-prepaes.png"
+    },
+    {
+        "name": "Mi primer ensayo",
+        "description": "Practicaste por primera vez con una simulación de ensayo",
+        "image_url": "https://res.cloudinary.com/dohtxxlbe/image/upload/v1698069712/Logros%20PrePAES/logo-mi-primer-ensayo.png"
+    },
+    {
+        "name": "Excelencia en Matemáticas",
+        "description": "Tuviste el puntaje máximo en uno de los ensayos",
+        "image_url": "https://res.cloudinary.com/dohtxxlbe/image/upload/v1698069771/Logros%20PrePAES/logro-excelencia-en-matemáticas.png"
+    },
+    {
+        "name": "Dominio de la Fase Inicial",
+        "description": "Completaste la primera fase del método PrePAES",
+        "image_url": "https://res.cloudinary.com/dohtxxlbe/image/upload/v1698069842/Logros%20PrePAES/logro-fase-inicial-prepaes.png"
+    },
+    {
+        "name": "Creador de Ensayos",
+        "description": "Creaste tu primer ensayo personalizado",
+        "image_url": "https://res.cloudinary.com/dohtxxlbe/image/upload/v1698069885/Logros%20PrePAES/logro-creador-de-ensayos.png"
+    }]
 
+    for logros in logros_data:
+        logros_object = Achievement.objects.create(**logros)
+
+def questionDificult():
+    pass
 
 poblarBd(dataAlgebra)
 poblarBd(dataNumeros)
 poblarBd(dataProbabilidades)
 poblarBd(dataGeometria)
+poblarDbLogros()
