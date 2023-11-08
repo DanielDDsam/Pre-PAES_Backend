@@ -152,7 +152,7 @@ class SendPasswordResetEmailSerializer(serializers.Serializer):
             user = Users.objects.get(email=email)
             uid = urlsafe_base64_encode(force_bytes(user.id))
             token = PasswordResetTokenGenerator().make_token(user)
-            link = 'https://prepaesbeta2-api.onrender.com/Reset/Password/:'+str(uid)+'/:'+str(token)
+            link = 'https://prepaesbeta.netlify.app/Reset/Password/'+str(uid)+'/'+str(token)
 
             # Enviar el correo electrónico de restablecimiento de contraseña
             subject = 'Reinicia tu contraseña'
