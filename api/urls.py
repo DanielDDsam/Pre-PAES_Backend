@@ -70,7 +70,7 @@ urlpatterns = [
     re_path(r'^best_average_score/(?P<pk>[0-9]+)/$', views.bestAverageScore.as_view()),#Endpoint para consultar el puntaje maximo y el promedio de puntajes de un usaurio
     re_path(r'^recent_essay/(?P<pk>[0-9]+)/$', views.CustomEssayMostRecentView.as_view()),#Endpoint para consultar el ensayo más reciente
     re_path(r'^recent_essay_resume/(?P<pk>[0-9]+)/$', views.CustomEssayMostRecentResumeView.as_view()),#Endpoint para consultar los ultimos 5 ensayos
-    re_path(r'^percentage_math_type/$', views.questionPercentView.as_view()),#Endpoint para peticion falsa
+    re_path(r'^percentage_math_type/$', views.questionPercentView.as_view()),#Endpoint para determinar el porcentaje de correstas y erroneas dependiendo de las categorias
 
     re_path(r'^achievment/$', views.achievmentListCreateView.as_view()),#Endpoint para crear y listar logros de un usuario
     re_path(r'^achievment/(?P<pk>[0-9]+)/$', views.achievmenRetrieveUpdateDestroyView.as_view()),#Endpoint para modificar, eliminar y retornar solo uno logro

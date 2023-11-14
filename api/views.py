@@ -33,6 +33,26 @@ class UsersRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     queryset = Users.objects.filter().order_by('pk')  # Obtiene todos los usuarios ordenados por su clave primaria
     serializer_class = UserSerializer  # Serializador utilizado para la representación de los usuarios
 
+    def update(self, request, pk = None, **kwargs):
+        
+        #lo ideal es siempre en cualquier crud de 1 usar el instance=self.get_object(), para que sepa a cual hacemos referencia
+        serializer = self.serializer_class(instance=self.get_object(), data=request.data,context={'request': request})#creamos la instancia de product y los nuevos datos mediante data = request.data
+    
+        if serializer.is_valid():
+            serializer.save()#guarda los datos en la base de datos
+            return Response(serializer.data, status= status.HTTP_200_OK)
+        else:
+          
+
+            if 'email' in serializer.errors:
+                print(serializer.errors['email'][0].code)
+
+                code = serializer.errors['email'][0].code #nos sirve para identificar que error se produce con los campo
+
+                if code == 'invalid':
+                    return Response({"message":"Email invalido, ingrese el formato correcto"}, status= status.HTTP_400_BAD_REQUEST) #si no cumple con las validaciones, ya sea que le falta un campo o ya exite lo mostrara
+                elif code == 'unique':
+                    return Response({"message":"El email ingresado ya esta en uso"}, status= status.HTTP_400_BAD_REQUEST)
 
 class UsersListCreate(generics.ListCreateAPIView):
     queryset = Users.objects.all()  # Obtiene todos los usuarios
@@ -44,7 +64,17 @@ class RegisterView(APIView):
         if serializer.is_valid():
             serializer.save()  # Guarda los datos del nuevo usuario en la base de datos
             return Response(serializer.data, status=status.HTTP_201_CREATED)  # Retorna los datos del usuario registrado en la respuesta con un código de estado 201 (CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  # Retorna los errores de validación en la respuesta con un código de estado 400 (BAD REQUEST)
+        else:
+
+            if 'email' in serializer.errors:#solo para identificar si el formato de email es correcto
+                print(serializer.errors['email'][0].code)
+
+                code = serializer.errors['email'][0].code #nos sirve para identificar que error se produce con los campo
+
+                if code == 'invalid':
+                    return Response({"message":"Email invalido, ingrese el formato correcto"}, status= status.HTTP_400_BAD_REQUEST) #si no cumple con las validaciones, ya sea que le falta un campo o ya exite lo mostrara
+                elif code == 'unique':
+                    return Response({"message":"El email ingresado ya esta en uso"}, status= status.HTTP_400_BAD_REQUEST)
 
 class RegisterAdminView(APIView):
     def post(self, request):
@@ -160,6 +190,21 @@ class QuestionCreate(generics.CreateAPIView):
     queryset = Question.objects.filter().order_by('pk')  # Consulta para obtener las preguntas ordenadas por clave primaria
     serializer_class = QuestionCreateSerializer  # Clase serializadora utilizada
 
+    def post(self, request, *args, **kwargs):
+        print(request.data)
+        serializer = self.serializer_class(data=request.data, context={'request': request})  # Crear una instancia del serializador con los datos de la solicitud
+        if (serializer.is_valid()):  # Validar los datos y lanzar una excepción en caso de que sean inválidos
+            serializer.save()  # Guardar los datos
+            return Response({'message': 'CREATED'}, status=status.HTTP_201_CREATED)  # Devolver una respuesta exitosa
+        else:
+            code = serializer.errors['link_resolution'][0].code #nos sirve para identificar que error se produce con los campo
+            print(code)
+            if code == 'invalid':
+                return Response({"message":"URL invalida, ingresela en el formato correcto"}, status= status.HTTP_400_BAD_REQUEST) #si no cumple con las validaciones, ya sea que le falta un campo o ya exite lo mostrara
+            elif code == 'unique':
+                return Response({"message":"La URL ingresada ya esta en uso"}, status= status.HTTP_400_BAD_REQUEST)
+         
+
 
 class QuestionList(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
@@ -174,6 +219,20 @@ class QuestionRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated]
     queryset = Question.objects.filter().order_by('pk')  # Consulta para obtener las preguntas ordenadas por clave primaria
     serializer_class = QuestionSerializer  # Clase serializadora utilizada
+
+    def update(self, request, *args, **kwargs):
+        print(request.data)
+        serializer = self.serializer_class(instance=self.get_object(), data=request.data, context={'request': request})  # Crear una instancia del serializador con los datos de la solicitud
+        if (serializer.is_valid()):  # Validar los datos y lanzar una excepción en caso de que sean inválidos
+            serializer.save()  # Guardar los datos
+            return Response({'message': 'CREATED'}, status=status.HTTP_201_CREATED)  # Devolver una respuesta exitosa
+        else:
+            code = serializer.errors['link_resolution'][0].code #nos sirve para identificar que error se produce con los campo
+            print(code)
+            if code == 'invalid':
+                return Response({"message":"URL invalida, ingresela en el formato correcto"}, status= status.HTTP_400_BAD_REQUEST) #si no cumple con las validaciones, ya sea que le falta un campo o ya exite lo mostrara
+            elif code == 'unique':
+                return Response({"message":"La URL ingresada ya esta en uso"}, status= status.HTTP_400_BAD_REQUEST)
 
 class QuestionDificultJson(generics.UpdateAPIView):
     #permission_classes = [IsAuthenticated]
@@ -253,6 +312,16 @@ class UserEssayHistoryView(generics.ListAPIView):
     def get_queryset(self):
         user_pk = self.kwargs['pk']  # Obtener el ID del usuario de los parámetros de la URL
         return CustomEssay.objects.filter(user_id=user_pk)  # Devolver los ensayos personalizados del usuario
+    
+    def list(self, request, pk=None):
+        queryset = self.get_queryset()
+        serializer = self.serializer_class(queryset, many = True) 
+        data = []
+        for i in serializer.data:
+            if i is not None: #evitamos que los ensayos incompletos se pasen al frontend
+                data.append(i)
+
+        return Response(data, status=status.HTTP_200_OK)
 
 
 class CustomEssayView(generics.CreateAPIView):
@@ -464,11 +533,12 @@ class QuestionListType(generics.ListAPIView):
     def get_queryset(self): 
 
         tiposDePreguntas = self.kwargs['tiposDePreguntas'] #
+        print(tiposDePreguntas)
         tiposDePreguntas = tiposDePreguntas.replace("[", "")
         tiposDePreguntas = tiposDePreguntas.replace("]", "")
         tipos_de_preguntas_list = tiposDePreguntas.split(',')
         tipos_de_preguntas = list(tipos_de_preguntas_list)
-
+        print(tipos_de_preguntas)
         numeroDePreguntas = int(self.kwargs['numeroDePreguntas']) #
         
         cantidadPorTipo = 0
@@ -476,10 +546,22 @@ class QuestionListType(generics.ListAPIView):
         preguntas = []
         cantidadPorPreguntas = [] 
         
+        for i in range(len(tipos_de_preguntas)):#idetificamos que tipo tiene el ensayo
+            print(tipos_de_preguntas[i])
+            if (tipos_de_preguntas[i] == 'algebra'):
+                tipos_de_preguntas[i] = '1'
+            elif (tipos_de_preguntas[i] == 'numeros'):
+                tipos_de_preguntas[i] = '2'
+            elif(tipos_de_preguntas[i] == 'probabilidades'):
+                tipos_de_preguntas[i] = '3'
+            elif(tipos_de_preguntas[i] == 'geometria'):
+                tipos_de_preguntas[i] = '4'
+
         if tipos_de_preguntas is not None:
 
-            if len(tipos_de_preguntas) == 0:
-                queryset = Question.objects.filter(type_question_id=tipos_de_preguntas).order_by('?')[:numeroDePreguntas]
+            if len(tipos_de_preguntas) == 1:
+                print(tipos_de_preguntas)
+                queryset = Question.objects.filter(type_question_id=tipos_de_preguntas[0]).order_by('?')[:numeroDePreguntas]
             else:
                 #identificar cuanto es para cada pregunta si hay mas de una
                 cantidadPorTipo = math.floor(numeroDePreguntas/len(tipos_de_preguntas))
@@ -1257,21 +1339,18 @@ class questionPercentView(generics.ListAPIView):
         return essayTypes
 
     def dataEssayTypes(self,essayTypesData,user):
-
-        numberEssayType = 0
         data = {}
         data2 = {}
         for i in range(len(essayTypesData)):#por cada tipo de matematica
-            numberEssayType = CustomEssay.objects.filter(type_essay = essayTypesData[i], user = user).count()
-            print(numberEssayType)
-            questionRigth = Answer.objects.filter(questions__type_question = essayTypesData[i], users = user, right = 1).count()
-            questionBad = Answer.objects.filter(questions__type_question = essayTypesData[i], users = user, right = 0).count()
+            #identificamos todas las preguntas contestadas por los tipo y para el usuario actual
             allquestion = Answer.objects.filter(questions__type_question = essayTypesData[i], users = user).count()
 
-            if(numberEssayType == 0):
+            if(allquestion == 0):#si son 0 quiere decir que no se ha contestado ninguna
                 data2['Correcta'] = 0
                 data2['Incorrecta'] = 0
             else:
+                questionRigth = Answer.objects.filter(questions__type_question = essayTypesData[i], users = user, right = 1).count()
+                questionBad = Answer.objects.filter(questions__type_question = essayTypesData[i], users = user, right = 0).count()
                 data2['Correcta'] = round(questionRigth*100/allquestion)
                 data2['Incorrecta'] = round(questionBad*100/allquestion)
             data[str(essayTypesData[i].type)] = data2.copy()
@@ -1307,8 +1386,8 @@ class validatorURLView(generics.ListAPIView):
     def formatearURL(self, url):
         url = url.replace("embed/", "watch?v=")
         url = url.split("?start=")[0]
-
         return url
+       
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
@@ -1317,23 +1396,26 @@ class validatorURLView(generics.ListAPIView):
         urlPull = []
 
         for i in serializer.data:
-            data = self.formatearURL(i['link_resolution'])
-            i['format_link']=data
-            urlPull.append(data)
+            if i['link_resolution'] is not None:#verificador para evitar ensayos incompletos
+                data = self.formatearURL(i['link_resolution'])
+                i['format_link']=data
+                urlPull.append(data)
+            else:
+                i['format_link']=None
         
         uniqueURL = set(urlPull)
-        listURL = (list(uniqueURL))
+        listURL = (list(uniqueURL))#ocupamos list para eliminar los repetidos y evitar error con los puntesros en memoria 
         data = []
-        for i in listURL:
-            data.append({'url': i, 'state':self.verificar_video(i)})
+        for i in listURL:#por cada url formateada 
+            data.append({'url': i, 'state':self.verificar_video(i)})#para cada url formateada verificamos si esta disponible
         
         dataBad = []
-        for i in serializer.data:
+        for i in serializer.data:#verificamos para cada url si las mismas estan disponibles en base a la url formateada
             for j in data:
-                if(i['format_link'] == j['url']):
+                if(i['format_link'] == j['url']):#
                     i['state'] = j['state']
 
-                    if (j['state'] == 200):
+                    if (j['state'] == 200): #definimos el mensaje adecuado
                         i['message'] = 'OK'
                     if(j['state'] == 301):
                         i['message'] = 'Verificar url video original'
