@@ -33,23 +33,26 @@ class UsersRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     queryset = Users.objects.filter().order_by('pk')  # Obtiene todos los usuarios ordenados por su clave primaria
     serializer_class = UserSerializer  # Serializador utilizado para la representación de los usuarios
 
-    def update(self, request, pk = None):
+    def update(self, request, pk = None, **kwargs):
+        
         #lo ideal es siempre en cualquier crud de 1 usar el instance=self.get_object(), para que sepa a cual hacemos referencia
         serializer = self.serializer_class(instance=self.get_object(), data=request.data,context={'request': request})#creamos la instancia de product y los nuevos datos mediante data = request.data
-
+    
         if serializer.is_valid():
             serializer.save()#guarda los datos en la base de datos
             return Response(serializer.data, status= status.HTTP_200_OK)
         else:
-            print(serializer.errors)
-            print(serializer.errors['email'][0].code)
+          
 
-            code = serializer.errors['email'][0].code #nos sirve para identificar que error se produce con los campo
+            if 'email' in serializer.errors:
+                print(serializer.errors['email'][0].code)
 
-            if code == 'invalid':
-                return Response({"message":"Email invalido, ingrese el formato correcto"}, status= status.HTTP_400_BAD_REQUEST) #si no cumple con las validaciones, ya sea que le falta un campo o ya exite lo mostrara
-            elif code == 'unique':
-                return Response({"message":"El email ingresado ya esta en uso"}, status= status.HTTP_400_BAD_REQUEST)
+                code = serializer.errors['email'][0].code #nos sirve para identificar que error se produce con los campo
+
+                if code == 'invalid':
+                    return Response({"message":"Email invalido, ingrese el formato correcto"}, status= status.HTTP_400_BAD_REQUEST) #si no cumple con las validaciones, ya sea que le falta un campo o ya exite lo mostrara
+                elif code == 'unique':
+                    return Response({"message":"El email ingresado ya esta en uso"}, status= status.HTTP_400_BAD_REQUEST)
 
 class UsersListCreate(generics.ListCreateAPIView):
     queryset = Users.objects.all()  # Obtiene todos los usuarios
@@ -62,14 +65,16 @@ class RegisterView(APIView):
             serializer.save()  # Guarda los datos del nuevo usuario en la base de datos
             return Response(serializer.data, status=status.HTTP_201_CREATED)  # Retorna los datos del usuario registrado en la respuesta con un código de estado 201 (CREATED)
         else:
-            print(serializer.errors['email'][0].code)
 
-            code = serializer.errors['email'][0].code
+            if 'email' in serializer.errors:#solo para identificar si el formato de email es correcto
+                print(serializer.errors['email'][0].code)
 
-            if code == 'invalid':
-                return Response({"message":"Email invalido, ingrese el formato correcto"}, status= status.HTTP_400_BAD_REQUEST) #si no cumple con las validaciones, ya sea que le falta un campo o ya exite lo mostrara
-            elif code == 'unique':
-                return Response({"message":"El email ingresado ya esta en uso"}, status= status.HTTP_400_BAD_REQUEST)
+                code = serializer.errors['email'][0].code #nos sirve para identificar que error se produce con los campo
+
+                if code == 'invalid':
+                    return Response({"message":"Email invalido, ingrese el formato correcto"}, status= status.HTTP_400_BAD_REQUEST) #si no cumple con las validaciones, ya sea que le falta un campo o ya exite lo mostrara
+                elif code == 'unique':
+                    return Response({"message":"El email ingresado ya esta en uso"}, status= status.HTTP_400_BAD_REQUEST)
 
 class RegisterAdminView(APIView):
     def post(self, request):
