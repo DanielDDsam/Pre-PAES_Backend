@@ -48,16 +48,18 @@ Cuando ya se tenga la contraseña, en MySQL Workbench o pgAdmin debe crear un sc
 
 Este comando creara la base de datos con sus tablas a través del ORM de Django.
 
-Para poblar las tablas de la base de datos es necesario ocupar el siguiente comando.
+Para poblar las tablas de la base de datos es necesario ocupar des comentar la línea 1 del archivo Scripts/main.py, luego ejecutar el siguiente comando.
 
 ```py manage.py shell < Scripts/main.py```
 
 Nota: Si utiliza la terminal de PowerShell deberá habilitar la ejecución de scripts.
 
+Posteriormente deberá cambiar la línea 155 del archivo api/serializer.py
+
+``` link='https://{su entoro local de frontend}/Reset/Password/'+str(uid)+'/'+str(token) ```
+
 Luego de esto escribir el siguiente comando para inicializar el servidor.
 
 ```py manage.py runserver```
-
-
 
 
