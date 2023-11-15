@@ -37,7 +37,8 @@ En settings.py que está dentro de la carpeta backend se debe encontrar esta par
 
 Aquí debe incluir la contraseña de su base de datos en la key, su usuario y su puerto según el administrador de base de datos que tenga instalado 
 
-``` 'PASSWORD': 'Aquí poner su contraseña'
+``` 
+    'PASSWORD': 'Aquí poner su contraseña'
     'PORT': 'Aquí ingresar el puerto a utilizar'
 ``` 
 
