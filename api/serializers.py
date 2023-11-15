@@ -574,16 +574,48 @@ class CustomEssayResponseSerializer(serializers.ModelSerializer):
         return answers
 
 #metodo para obtener las preguntas y linkear las alternativas
-    def get_question(self,answer):
+    def get_question(self, instance):
         questions = []
-        for question in Question.objects.filter(answer__in=answer):
+        
+        data = CustomEssayQuestion.objects.filter(custom_essay = instance).values_list('question_id')
+        print('data id question : '+str(data))
+        for question in Question.objects.filter(id__in=data):
             question_dict = {
+                'id':question.id,
                 'question': question.question,
                 'link': question.link_resolution,
                 'answer': self.get_answers(question.id)
             }
+            print(question_dict['id'])
             questions.append(question_dict)
+     
         return questions
+    
+    def order_answers(self, answers, questions):
+
+        dataOrder = []
+        count = 0
+        print(answers)
+
+        for i in questions:
+            print(i['id'])
+            count = 0
+            for j in i['answer']:
+                print('answer id :'+str(j['answer_id']))
+                #print('answers :'+str(answers))
+                if j['answer_id'] in answers:
+                    dataOrder.append(j['answer_id'])
+                    
+                    break
+                else:
+            
+                    count+=1
+                    if count == 4:
+                        dataOrder.append('')
+                        
+                        break
+        print(dataOrder)
+        return dataOrder
 
 
     def get_score(self, instance):
@@ -605,8 +637,10 @@ class CustomEssayResponseSerializer(serializers.ModelSerializer):
         for answer in answers:
             answers_list.append(answer.answers.id)
       
-        data['question'] = self.get_question(answers_list) #trae todos los datos a partir de las respuestas que se respondieron para un ensayo en especifico
-        data['answered'] = answers_list #entrega el listado con las id de las respuestas para el ensayo
+        data['question'] = self.get_question(instance) #trae todos los datos a partir de las respuestas que se respondieron para un ensayo en especifico
+        
+        
+        data['answered'] = self.order_answers(answers_list, data['question'])
         data['score'] = self.get_score(instance)
         return data
 
