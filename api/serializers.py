@@ -19,7 +19,7 @@ generic_fields = ['created', 'updated', 'is_deleted']
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = Users
-        exclude = [*generic_fields, 'is_admin', 'password']
+        exclude = ['created', 'updated', 'is_admin', 'password']
 
 # Serializador para el login del usuario
 class UserLoginSerializer(serializers.ModelSerializer):
