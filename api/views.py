@@ -43,7 +43,7 @@ class UsersRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
             return Response(serializer.data, status= status.HTTP_200_OK)
         else:
           
-
+            print('46 error')
             if 'email' in serializer.errors:
                 print(serializer.errors['email'][0].code)
 
@@ -53,10 +53,29 @@ class UsersRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
                     return Response({"message":"Email invalido, ingrese el formato correcto"}, status= status.HTTP_400_BAD_REQUEST) #si no cumple con las validaciones, ya sea que le falta un campo o ya exite lo mostrara
                 elif code == 'unique':
                     return Response({"message":"El email ingresado ya esta en uso"}, status= status.HTTP_400_BAD_REQUEST)
+                else:
+                    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                print('46 error')
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UsersListCreate(generics.ListCreateAPIView):
     queryset = Users.objects.all()  # Obtiene todos los usuarios
     serializer_class = UserSerializer  # Serializador utilizado para la representación de los usuarios
+
+    def get_queryset(self):
+        user = self.request.user  # Obtener el ID del usuario de los parámetros de la URL
+        return Users.objects.exclude(id=user.id) # Devolver los ensayos personalizados del usuario
+
+    def list(self, request, pk=None):
+        queryset = self.get_queryset()
+        serializer = self.serializer_class(queryset, many = True) 
+        data = []
+        for i in serializer.data:
+            if i is not None: #evitamos que los ensayos incompletos se pasen al frontend
+                data.append(i)
+
+        return Response(data, status=status.HTTP_200_OK)
 
 class RegisterView(APIView):
     def post(self, request):
@@ -75,6 +94,11 @@ class RegisterView(APIView):
                     return Response({"message":"Email invalido, ingrese el formato correcto"}, status= status.HTTP_400_BAD_REQUEST) #si no cumple con las validaciones, ya sea que le falta un campo o ya exite lo mostrara
                 elif code == 'unique':
                     return Response({"message":"El email ingresado ya esta en uso"}, status= status.HTTP_400_BAD_REQUEST)
+                else:
+                        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                print('46 error')
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class RegisterAdminView(APIView):
     def post(self, request):
@@ -95,7 +119,7 @@ class LoginView(APIView):
         password = serializer.data.get('password')  # Obtiene la contraseña del usuario del serializadorprint(user)
         user = authenticate(email=email, password=password)  # Autentica al usuario utilizando el email y la contraseña
         #user devuelve el objeto user
-        if user is not None:
+        if user is not None and user.is_deleted == False:
             token = get_tokens_for_user(user)  # Obtiene el token de acceso para el usuario autenticado
 
             #21-08
@@ -203,6 +227,8 @@ class QuestionCreate(generics.CreateAPIView):
                 return Response({"message":"URL invalida, ingresela en el formato correcto"}, status= status.HTTP_400_BAD_REQUEST) #si no cumple con las validaciones, ya sea que le falta un campo o ya exite lo mostrara
             elif code == 'unique':
                 return Response({"message":"La URL ingresada ya esta en uso"}, status= status.HTTP_400_BAD_REQUEST)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
          
 
 
@@ -212,7 +238,7 @@ class QuestionList(generics.ListAPIView):
     serializer_class = QuestionSerializer  # Clase serializadora utilizada
 
     filter_backends = [DjangoFilterBackend]  # Filtros aplicados a la vista
-    filterset_fields = ['id', 'type_question', 'question', 'subject', 'link_resolution']  # Campos permitidos para filtrar
+    filterset_fields = ['id', 'type_question', 'question', 'subject', 'link_resolution', 'is_deleted']  # Campos permitidos para filtrar
 
 
 class QuestionRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
@@ -233,6 +259,8 @@ class QuestionRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
                 return Response({"message":"URL invalida, ingresela en el formato correcto"}, status= status.HTTP_400_BAD_REQUEST) #si no cumple con las validaciones, ya sea que le falta un campo o ya exite lo mostrara
             elif code == 'unique':
                 return Response({"message":"La URL ingresada ya esta en uso"}, status= status.HTTP_400_BAD_REQUEST)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class QuestionDificultJson(generics.UpdateAPIView):
     #permission_classes = [IsAuthenticated]
@@ -561,7 +589,7 @@ class QuestionListType(generics.ListAPIView):
 
             if len(tipos_de_preguntas) == 1:
                 print(tipos_de_preguntas)
-                queryset = Question.objects.filter(type_question_id=tipos_de_preguntas[0]).order_by('?')[:numeroDePreguntas]
+                queryset = Question.objects.filter(type_question_id=tipos_de_preguntas[0], is_deleted = False).order_by('?')[:numeroDePreguntas]
             else:
                 #identificar cuanto es para cada pregunta si hay mas de una
                 cantidadPorTipo = math.floor(numeroDePreguntas/len(tipos_de_preguntas))
@@ -577,14 +605,14 @@ class QuestionListType(generics.ListAPIView):
                         cantidadPorPreguntas[random.randint(0, len(tipos_de_preguntas)-1)] +=1
                     
                     for i in range(len(tipos_de_preguntas)):
-                        queryset = Question.objects.filter(type_question_id=tipos_de_preguntas[i]).order_by('?')[:cantidadPorPreguntas[i]]
+                        queryset = Question.objects.filter(type_question_id=tipos_de_preguntas[i], is_deleted = False).order_by('?')[:cantidadPorPreguntas[i]]
                         preguntas.extend(queryset)
                     
                     return preguntas
                 else:
                     for i in range(len(tipos_de_preguntas)):
                         print(numeroDePreguntas/len(tipos_de_preguntas))
-                        queryset = Question.objects.filter(type_question_id__in=tipos_de_preguntas[i]).order_by('?')[:(numeroDePreguntas/len(tipos_de_preguntas))]#si es exacto el numero de pregunta es igual por cada uno
+                        queryset = Question.objects.filter(type_question_id__in=tipos_de_preguntas[i], is_deleted = False).order_by('?')[:(numeroDePreguntas/len(tipos_de_preguntas))]#si es exacto el numero de pregunta es igual por cada uno
                         preguntas.extend(queryset)
 
                     return preguntas
@@ -735,20 +763,20 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
         print(data)
 
         if(isinstance(data, UserQuestionState)):
-            queryset = Question.objects.filter(id=data.question_id).first() #si es reforzar o correcta la obtenemos 
+            queryset = Question.objects.filter(id=data.question_id, is_deleted = False).first() #si es reforzar o correcta la obtenemos 
         else:
             if data['flag'] == 0:
                 print('0')
-                queryset = Question.objects.filter(dificult = data['dificultad']).order_by('?').first() #retornamos una pregunta inicial que sea de dificultad facil y de cualquier categoria
+                queryset = Question.objects.filter(dificult = data['dificultad'], is_deleted = False).order_by('?').first() #retornamos una pregunta inicial que sea de dificultad facil y de cualquier categoria
                 print(queryset)
             elif data['flag'] == 1:
                 print('1')
-                queryset = Question.objects.filter(dificult = data['dificultad'], type_question_id = data['categoria']).exclude(id__in = UserQuestionState_ids).order_by('?').first() #retornamos una pregunta nueva que no sea una de las ya contestadas y respetando la dificultad y categoria
+                queryset = Question.objects.filter(dificult = data['dificultad'], type_question_id = data['categoria'], is_deleted = False).exclude(id__in = UserQuestionState_ids).order_by('?').first() #retornamos una pregunta nueva que no sea una de las ya contestadas y respetando la dificultad y categoria
                 print('651'+str(queryset))
                 if(queryset is None):#si ya no quedan nuevas preguntas per dificultad o categoria, entonces saldra una al alzar repetando lo ultimo y evitan la repetición de alguna de las que ya se encuentran en la fase actual de prePAES
-                    queryset = Question.objects.filter(dificult = data['dificultad'], type_question_id = data['categoria']).exclude(id__in = data['prePaesQuestion']).order_by('?').first()
+                    queryset = Question.objects.filter(dificult = data['dificultad'], type_question_id = data['categoria'], is_deleted = False).exclude(id__in = data['prePaesQuestion']).order_by('?').first()
                     if(queryset is None):
-                        queryset = Question.objects.filter(dificult = data['dificultad']).exclude(id__in = data['prePaesQuestion']).order_by('?').first()
+                        queryset = Question.objects.filter(dificult = data['dificultad'], is_deleted = False).exclude(id__in = data['prePaesQuestion']).order_by('?').first()
                 print('660'+str(queryset))
             
             
@@ -934,7 +962,7 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
                 # Probabilidad de cambiar una pregunta "correcta" a "reforzar" o "nueva"
                 if ultimas_respuestas == ['Correcta', 'Correcta'] and random.random() < 0.7:
                     # Cambiar una pregunta "correcta" a "reforzar"
-                    allquestionsObtain = UserQuestionState.objects.filter(users_id = user.id, question__dificult = dificultadActual, question__type_question=categoria).exclude(question_id__in=prePaesQuestion)#quitamos las preguntas de la fase actual de prePAES
+                    allquestionsObtain = UserQuestionState.objects.filter(users_id = user.id, question__dificult = dificultadActual, question__type_question=categoria, question__is_deleted = False).exclude(question_id__in=prePaesQuestion)#quitamos las preguntas de la fase actual de prePAES
 
                     if (len(allquestionsObtain) != 0):
                         preguntas_list = [pregunta for pregunta in allquestionsObtain if pregunta.state == 'Reforzar']
@@ -948,7 +976,7 @@ class oneQuestionRulesPrePaes(generics.ListAPIView):
                     
                 if ultimas_respuestas == ['Reforzar', 'Reforzar'] and random.random() < 0.7:
                     # Cambiar una pregunta "errónea" a "correcta"
-                    allquestionsObtain = UserQuestionState.objects.filter(users_id = user.id, question__dificult = dificultadActual, question__type_question=categoria).exclude(question_id__in=prePaesQuestion)#quitamos las preguntas de la fase actual de prePAES
+                    allquestionsObtain = UserQuestionState.objects.filter(users_id = user.id, question__dificult = dificultadActual, question__type_question=categoria, question__is_deleted = False).exclude(question_id__in=prePaesQuestion)#quitamos las preguntas de la fase actual de prePAES
 
                     if (len(allquestionsObtain) != 0):
                         preguntas_list = [pregunta for pregunta in allquestionsObtain if pregunta.state == 'Correcta']
@@ -1112,17 +1140,32 @@ class stadisticsPrePAESView(generics.ListAPIView):
 
         return dificultades
 
+    def promedio(self, serializer):
+
+        cantidad = 0
+        if (len(serializer) > 0):
+            for i in serializer:
+                if (i['state'] == 'Correcta'):
+                    cantidad+=1
+            
+            cantidad = (cantidad*7)/len(serializer)
+            return round(cantidad, 1)
+        return 'Aun no contestas preguntas'
+
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         serializer = self.serializer_class(queryset, many=True)
         most_common_subjects = self.stateMAX(serializer)
         most_common_state = self.stateDificult(serializer)
         dificult_subjects = self.determinar_dificultades()
+        average = self.promedio(serializer.data)
                
         data = []
         data.append(most_common_subjects)
         data.append(most_common_state)
         data.append(dificult_subjects)
+        data.append(average)
+        print(average)
 
         return Response(data, status=status.HTTP_200_OK)
     
