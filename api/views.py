@@ -212,7 +212,7 @@ class QuestionList(generics.ListAPIView):
     serializer_class = QuestionSerializer  # Clase serializadora utilizada
 
     filter_backends = [DjangoFilterBackend]  # Filtros aplicados a la vista
-    filterset_fields = ['id', 'type_question', 'question', 'subject', 'link_resolution']  # Campos permitidos para filtrar
+    filterset_fields = ['id', 'type_question', 'question', 'subject', 'link_resolution', 'is_deleted']  # Campos permitidos para filtrar
 
 
 class QuestionRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
@@ -1112,17 +1112,32 @@ class stadisticsPrePAESView(generics.ListAPIView):
 
         return dificultades
 
+    def promedio(self, serializer):
+
+        cantidad = 0
+        if (len(serializer) > 0):
+            for i in serializer:
+                if (i['state'] == 'Correcta'):
+                    cantidad+=1
+            
+            cantidad = (cantidad*7)/len(serializer)
+            return round(cantidad, 1)
+        return 'Aun no contestas preguntas'
+
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         serializer = self.serializer_class(queryset, many=True)
         most_common_subjects = self.stateMAX(serializer)
         most_common_state = self.stateDificult(serializer)
         dificult_subjects = self.determinar_dificultades()
+        average = self.promedio(serializer.data)
                
         data = []
         data.append(most_common_subjects)
         data.append(most_common_state)
         data.append(dificult_subjects)
+        data.append(average)
+        print(average)
 
         return Response(data, status=status.HTTP_200_OK)
     

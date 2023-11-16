@@ -225,7 +225,7 @@ class QuestionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Question
-        exclude = [*generic_fields, 'type_question']
+        exclude = ['created', 'updated', 'type_question']
 
 
 # Serializador para crear Question
@@ -579,7 +579,14 @@ class CustomEssayResponseSerializer(serializers.ModelSerializer):
         
         data = CustomEssayQuestion.objects.filter(custom_essay = instance).values_list('question_id')
         print('data id question : '+str(data))
-        for question in Question.objects.filter(id__in=data):
+
+        ordered_ids = [id for id, in data]
+        questionsh = Question.objects.filter(id__in=data)
+        question_data_sorted = sorted(questionsh, key=lambda x: ordered_ids.index(x.id))
+
+        print(question_data_sorted)
+
+        for question in question_data_sorted:
             question_dict = {
                 'id':question.id,
                 'question': question.question,
