@@ -994,7 +994,7 @@ class QuestionErrorSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = QuestionError
-        exclude = [*generic_fields]
+        exclude = ['created', 'updated']
 
 #20-10-2023
 class AchievmentSerializer(serializers.ModelSerializer):

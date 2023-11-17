@@ -65,7 +65,7 @@ class UsersListCreate(generics.ListCreateAPIView):
 
     def get_queryset(self):
         user = self.request.user  # Obtener el ID del usuario de los parámetros de la URL
-        return Users.objects.exclude(id=user.id) # Devolver los ensayos personalizados del usuario
+        return Users.objects.exclude(id=user.id).order_by('id')  # Devolver los ensayos personalizados del usuario
 
     def list(self, request, pk=None):
         queryset = self.get_queryset()
@@ -234,7 +234,7 @@ class QuestionCreate(generics.CreateAPIView):
 
 class QuestionList(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
-    queryset = Question.objects.all()  # Consulta para obtener todas las preguntas
+    queryset = Question.objects.all().order_by('id')  # Consulta para obtener todas las preguntas
     serializer_class = QuestionSerializer  # Clase serializadora utilizada
 
     filter_backends = [DjangoFilterBackend]  # Filtros aplicados a la vista
