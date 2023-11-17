@@ -318,7 +318,7 @@ class SaveAnswersSerializer(serializers.Serializer):
 
         return data
     
-    def validateAchievements(self, maxpoint, answer_ids, user):
+    def validateAchievements(self, maxpoint, answer_ids, user, user_essay):
 
         achievemetFirst = Achievement.objects.filter(name = 'Mi primer ensayo').first()
         userAchievementFirstEssay = UserAchievement.objects.filter(user=user, achievement=achievemetFirst).first()
@@ -332,7 +332,9 @@ class SaveAnswersSerializer(serializers.Serializer):
         if(userAchievementFirstEssay is None):
             UserAchievement.objects.create(user=user, achievement=achievemetFirst)#relacionado al primer logro que es por realizar un método ensayo
 
-        if (userAchievementMax is None and maxpoint == len(answer_ids)):
+        print('maxpoint' +str(maxpoint)) 
+        print(user_essay.current_questions) 
+        if (userAchievementMax is None and maxpoint == user_essay.current_questions):
             UserAchievement.objects.create(user=user, achievement=achievementMax)#relacionado al primer logro que es por realizar un método ensayo
 
 
@@ -363,7 +365,7 @@ class SaveAnswersSerializer(serializers.Serializer):
 
             essay_answers.append(essay_answer)
 
-        self.validateAchievements(maxpoint,answer_ids,user)
+        self.validateAchievements(maxpoint,answer_ids,user, user_essay)
         
         return essay_answers
 
@@ -494,8 +496,8 @@ class CustomEssaySerializer(serializers.ModelSerializer):
 
         count = CustomEssay.objects.filter(is_custom = True, user = self.context['request'].user).count()
         achievemet = Achievement.objects.filter(name = 'Creador de Ensayos').first()
-        achievmentFirstCustom = UserAchievement.objects.filter(user=self.context['request'].user, achievement=achievemet)
-        if (count == 1 and achievmentFirstCustom is None):
+        achievmentFirstCustom = UserAchievement.objects.filter(user=self.context['request'].user, achievement=achievemet).first() 
+        if (count >= 1 and achievmentFirstCustom is None):
             UserAchievement.objects.create(user=self.context['request'].user, achievement=achievemet)
 
 
